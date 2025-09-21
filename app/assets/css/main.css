@@ -1,2 +1,84 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+
+@theme {
+  /* Authentic Ceramic Color Palette - From Pattern Reference Site */
+
+  /* Cream & Light Neutrals */
+  --color-cream-50: #fafafa;
+  --color-cream-100: #dcd5d1;
+  --color-cream-200: #dbd4d0;
+  --color-cream-300: #dad6d0;
+  --color-cream-400: #dcd5ce;
+  --color-cream-500: #d3d5d9;
+  --color-cream-600: #d7d9dd;
+  --color-cream-700: #d2d4d8;
+  --color-cream-800: #d1d3d7;
+  --color-cream-900: #dad3cf;
+  --color-cream-950: #d5d7db;
+
+  /* Clay & Earth Browns */
+  --color-clay-50: #4f4833;
+  --color-clay-100: #4e4732;
+  --color-clay-200: #4d4631;
+  --color-clay-300: #4c4530;
+  --color-clay-400: #4b442f;
+  --color-clay-500: #4a432e;
+  --color-clay-600: #49422d;
+  --color-clay-700: #48412c;
+  --color-clay-800: #4d632f;
+  --color-clay-900: #4c4530;
+  --color-clay-950: #4b442f;
+
+  /* Stone & Cool Grays */
+  --color-stone-50: #d0d2d6;
+  --color-stone-100: #cfd1d5;
+  --color-stone-200: #d8dade;
+  --color-stone-300: #a1a4a3;
+  --color-stone-400: #aaa9a7;
+  --color-stone-500: #dad6d0;
+  --color-stone-600: #586f6b;
+  --color-stone-700: #858e7f;
+  --color-stone-800: #868780;
+  --color-stone-900: #cfd1d5;
+  --color-stone-950: #858e7f;
+
+  /* Sage & Natural Greens */
+  --color-sage-50: #858e7f;
+  --color-sage-100: #586f6b;
+  --color-sage-200: #868780;
+  --color-sage-300: #4e4732;
+  --color-sage-400: #49422d;
+  --color-sage-500: #48412c;
+  --color-sage-600: #4f4833;
+  --color-sage-700: #4a432e;
+  --color-sage-800: #4b442f;
+  --color-sage-900: #4c4530;
+  --color-sage-950: #4d4631;
+
+  /* Custom Typography fonts */
+  --font-family-sans: 'Inter', 'ui-sans-serif', 'system-ui';
+  --font-family-serif: 'Crimson Text', 'ui-serif', 'Georgia';
+  --font-family-display: 'Playfair Display', 'ui-serif';
+
+  /* Custom Typography Scale */
+  --text-ceramic-xs: 0.75rem; /* 12px */
+  --text-ceramic-sm: 0.875rem; /* 14px */
+  --text-ceramic-base: 1rem; /* 16px */
+  --text-ceramic-lg: 1.125rem; /* 18px */
+  --text-ceramic-xl: 1.25rem; /* 20px */
+  --text-ceramic-2xl: 1.5rem; /* 24px */
+  --text-ceramic-3xl: 1.875rem; /* 30px */
+  --text-ceramic-4xl: 2.25rem; /* 36px */
+  --text-ceramic-hero: 3rem; /* 48px */
+  --text-ceramic-title: 3.75rem; /* 60px */
+
+  /* Custom Spacing Scale (8px grid) */
+  --spacing-ceramic-xs: 0.5rem; /* 8px */
+  --spacing-ceramic-sm: 1rem; /* 16px */
+  --spacing-ceramic-md: 1.5rem; /* 24px */
+  --spacing-ceramic-lg: 2rem; /* 32px */
+  --spacing-ceramic-xl: 3rem; /* 48px */
+  --spacing-ceramic-2xl: 4rem; /* 64px */
+  --spacing-ceramic-3xl: 6rem; /* 96px */
+}
