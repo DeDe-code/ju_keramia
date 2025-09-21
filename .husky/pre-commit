@@ -1,3 +1,2 @@
-npm run exec lint-stage
-npm run format:check
+npx lint-staged
 

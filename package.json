@@ -44,6 +44,12 @@
     "prettier": "^3.6.2"
   },
   "lint-staged": {
-    "*": "npm run lint --fix && npm run format"
+    "*.{js,ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }
