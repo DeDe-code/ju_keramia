@@ -8,7 +8,7 @@
       <LayoutAppMobileNavigation />
       <NuxtLink
         to="/"
-        class="ml-ceramic-md font-ceramic-display text-ceramic-3xl text-clay-800 font-semibold"
+        class="ml-ceramic-md font-ceramic-mono text-ceramic-3xl text-clay-950 font-semibold"
       >
         ju_keramia
       </NuxtLink>

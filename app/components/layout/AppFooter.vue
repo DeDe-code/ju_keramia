@@ -28,7 +28,7 @@ const items = ref<NavigationMenuItem[][]>([
 </script>
 
 <template>
-  <footer class="w-full py-4 px-8 bg-stone-600 md:py-8 text-cream-25">
+  <footer class="w-full py-4 px-8 bg-clay-600 md:py-8 text-cream-25">
     <div class="max-w-7xl mx-auto">
       <!-- Main Footer Content -->
       <div class="flex flex-col justify-between gap-ceramic-md md:flex-row">
@@ -36,7 +36,7 @@ const items = ref<NavigationMenuItem[][]>([
         <div class="text-center md:text-left">
           <NuxtLink
             to="/"
-            class="inline-block font-ceramic-display text-2xl md:text-3xl font-semibold text-cream-25 hover:text-cream-100 transition-colors duration-200"
+            class="inline-block font-ceramic-mono text-2xl md:text-3xl font-semibold text-cream-25 hover:text-cream-100 transition-colors duration-200"
           >
             ju_keramia
           </NuxtLink>
