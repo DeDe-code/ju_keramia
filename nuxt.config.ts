@@ -2,7 +2,14 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/content', '@nuxt/eslint', '@nuxt/image', '@nuxt/ui', '@nuxt/icon'],
+  modules: [
+    '@nuxt/content',
+    '@nuxt/eslint',
+    '@nuxt/image',
+    '@nuxt/ui',
+    '@nuxt/icon',
+    '@nuxtjs/google-fonts',
+  ],
   css: ['./app/assets/css/main.css'],
 
   // Enable modern View Transitions API for smooth page transitions
@@ -53,6 +60,28 @@ export default defineNuxtConfig({
       scan: true, // Scan components for used icons
       sizeLimitKb: 256, // Limit bundle size
     },
+  },
+
+  // Google Fonts configuration for ceramic design system
+  googleFonts: {
+    families: {
+      // Sans-serif font for body text
+      Inter: ['300', '400', '500', '600', '700'],
+      // Serif font for alternative text
+      'Crimson Text': {
+        wght: ['400', '600'],
+        ital: ['400'],
+      },
+      // Display font for headings and titles
+      'Playfair Display': {
+        wght: ['400', '500', '600', '700'],
+        ital: ['400'],
+      },
+      // Monospace font for code and technical text
+      'Cutive Mono': ['400'],
+    },
+    display: 'swap', // Improves loading performance
+    preload: true, // Preloads fonts for better performance
   },
 
   // Ensure proper build configuration for icons
