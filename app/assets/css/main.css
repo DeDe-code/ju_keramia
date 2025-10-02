@@ -1,10 +1,12 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
-@theme {
-  /* Authentic Ceramic Color Palette - From Pattern Reference Site */
+/* Custom Ceramic Design System */
 
+@theme {
   /* Cream & Light Neutrals */
+  --color-*: initial;
+  --color-cream-25: #ddd5d0;
   --color-cream-50: #fafafa;
   --color-cream-100: #dcd5d1;
   --color-cream-200: #dbd4d0;
@@ -62,6 +64,7 @@
   --font-family-display: 'Playfair Display', 'ui-serif';
 
   /* Custom Typography Scale */
+  --text-*: initial;
   --text-ceramic-xs: 0.75rem; /* 12px */
   --text-ceramic-sm: 0.875rem; /* 14px */
   --text-ceramic-base: 1rem; /* 16px */
@@ -73,7 +76,20 @@
   --text-ceramic-hero: 3rem; /* 48px */
   --text-ceramic-title: 3.75rem; /* 60px */
 
+  /* Override Tailwind's text sizes with ceramic scale */
+  --text-xs: var(--text-ceramic-xs);
+  --text-sm: var(--text-ceramic-sm);
+  --text-base: var(--text-ceramic-base);
+  --text-lg: var(--text-ceramic-lg);
+  --text-xl: var(--text-ceramic-xl);
+  --text-2xl: var(--text-ceramic-2xl);
+  --text-3xl: var(--text-ceramic-3xl);
+  --text-4xl: var(--text-ceramic-4xl);
+  --text-5xl: var(--text-ceramic-hero);
+  --text-6xl: var(--text-ceramic-title);
+
   /* Custom Spacing Scale (8px grid) */
+  --spacing-*: initial;
   --spacing-ceramic-xs: 0.5rem; /* 8px */
   --spacing-ceramic-sm: 1rem; /* 16px */
   --spacing-ceramic-md: 1.5rem; /* 24px */
@@ -81,4 +97,278 @@
   --spacing-ceramic-xl: 3rem; /* 48px */
   --spacing-ceramic-2xl: 4rem; /* 64px */
   --spacing-ceramic-3xl: 6rem; /* 96px */
+
+  /* Override Tailwind's spacing with ceramic scale */
+  --spacing-1: calc(var(--spacing-ceramic-xs) * 0.25); /* 2px */
+  --spacing-2: calc(var(--spacing-ceramic-xs) * 0.5); /* 4px */
+  --spacing-3: var(--spacing-ceramic-xs); /* 8px */
+  --spacing-4: var(--spacing-ceramic-sm); /* 16px */
+  --spacing-5: calc(var(--spacing-ceramic-sm) * 1.25); /* 20px */
+  --spacing-6: var(--spacing-ceramic-md); /* 24px */
+  --spacing-8: var(--spacing-ceramic-lg); /* 32px */
+  --spacing-10: calc(var(--spacing-ceramic-lg) * 1.25); /* 40px */
+  --spacing-12: var(--spacing-ceramic-xl); /* 48px */
+  --spacing-16: var(--spacing-ceramic-2xl); /* 64px */
+  --spacing-20: calc(var(--spacing-ceramic-2xl) * 1.25); /* 80px */
+  --spacing-24: var(--spacing-ceramic-3xl); /* 96px */
+
+  /* Custom Size Scale for Components */
+  --size-ceramic-xs: 1.5rem; /* 24px */
+  --size-ceramic-sm: 2rem; /* 32px */
+  --size-ceramic-md: 2.5rem; /* 40px */
+  --size-ceramic-lg: 3rem; /* 48px */
+  --size-ceramic-xl: 3.5rem; /* 56px */
+  --size-ceramic-2xl: 4rem; /* 64px */
+
+  /* Override Nuxt UI component sizes */
+  --size-xs: var(--size-ceramic-xs);
+  --size-sm: var(--size-ceramic-sm);
+  --size-md: var(--size-ceramic-md);
+  --size-lg: var(--size-ceramic-lg);
+  --size-xl: var(--size-ceramic-xl);
+  --size-2xl: var(--size-ceramic-2xl);
+
+  /* Custom Border Radius - Ceramic soft edges */
+  --radius-ceramic-xs: 0.1875rem; /* 3px */
+  --radius-ceramic-sm: 0.25rem; /* 4px */
+  --radius-ceramic-md: 0.375rem; /* 6px */
+  --radius-ceramic-lg: 0.5rem; /* 8px */
+  --radius-ceramic-xl: 0.75rem; /* 12px */
+  --radius-ceramic-2xl: 1rem; /* 16px */
+
+  /* Override Tailwind radius with ceramic values */
+  --radius-xs: var(--radius-ceramic-xs);
+  --radius-sm: var(--radius-ceramic-sm);
+  --radius-md: var(--radius-ceramic-md);
+  --radius-lg: var(--radius-ceramic-lg);
+  --radius-xl: var(--radius-ceramic-xl);
+  --radius-2xl: var(--radius-ceramic-2xl);
+}
+
+/* Custom Ceramic Utility Classes */
+@layer utilities {
+  /* Ceramic Typography Classes */
+  .text-ceramic-xs {
+    font-size: var(--text-ceramic-xs);
+  }
+  .text-ceramic-sm {
+    font-size: var(--text-ceramic-sm);
+  }
+  .text-ceramic-base {
+    font-size: var(--text-ceramic-base);
+  }
+  .text-ceramic-lg {
+    font-size: var(--text-ceramic-lg);
+  }
+  .text-ceramic-xl {
+    font-size: var(--text-ceramic-xl);
+  }
+  .text-ceramic-2xl {
+    font-size: var(--text-ceramic-2xl);
+  }
+  .text-ceramic-3xl {
+    font-size: var(--text-ceramic-3xl);
+  }
+  .text-ceramic-4xl {
+    font-size: var(--text-ceramic-4xl);
+  }
+  .text-ceramic-hero {
+    font-size: var(--text-ceramic-hero);
+  }
+  .text-ceramic-title {
+    font-size: var(--text-ceramic-title);
+  }
+
+  /* Ceramic Font Families */
+  .font-ceramic-sans {
+    font-family: var(--font-family-sans);
+  }
+  .font-ceramic-serif {
+    font-family: var(--font-family-serif);
+  }
+  .font-ceramic-display {
+    font-family: var(--font-family-display);
+  }
+
+  /* Ceramic Spacing Classes */
+  .p-ceramic-xs {
+    padding: var(--spacing-ceramic-xs);
+  }
+  .p-ceramic-sm {
+    padding: var(--spacing-ceramic-sm);
+  }
+  .p-ceramic-md {
+    padding: var(--spacing-ceramic-md);
+  }
+  .p-ceramic-lg {
+    padding: var(--spacing-ceramic-lg);
+  }
+  .p-ceramic-xl {
+    padding: var(--spacing-ceramic-xl);
+  }
+  .p-ceramic-2xl {
+    padding: var(--spacing-ceramic-2xl);
+  }
+  .p-ceramic-3xl {
+    padding: var(--spacing-ceramic-3xl);
+  }
+
+  .px-ceramic-xs {
+    padding-left: var(--spacing-ceramic-xs);
+    padding-right: var(--spacing-ceramic-xs);
+  }
+  .px-ceramic-sm {
+    padding-left: var(--spacing-ceramic-sm);
+    padding-right: var(--spacing-ceramic-sm);
+  }
+  .px-ceramic-md {
+    padding-left: var(--spacing-ceramic-md);
+    padding-right: var(--spacing-ceramic-md);
+  }
+  .px-ceramic-lg {
+    padding-left: var(--spacing-ceramic-lg);
+    padding-right: var(--spacing-ceramic-lg);
+  }
+  .px-ceramic-xl {
+    padding-left: var(--spacing-ceramic-xl);
+    padding-right: var(--spacing-ceramic-xl);
+  }
+
+  .py-ceramic-xs {
+    padding-top: var(--spacing-ceramic-xs);
+    padding-bottom: var(--spacing-ceramic-xs);
+  }
+  .py-ceramic-sm {
+    padding-top: var(--spacing-ceramic-sm);
+    padding-bottom: var(--spacing-ceramic-sm);
+  }
+  .py-ceramic-md {
+    padding-top: var(--spacing-ceramic-md);
+    padding-bottom: var(--spacing-ceramic-md);
+  }
+  .py-ceramic-lg {
+    padding-top: var(--spacing-ceramic-lg);
+    padding-bottom: var(--spacing-ceramic-lg);
+  }
+  .py-ceramic-xl {
+    padding-top: var(--spacing-ceramic-xl);
+    padding-bottom: var(--spacing-ceramic-xl);
+  }
+
+  /* Ceramic Margin Classes */
+  .m-ceramic-xs {
+    margin: var(--spacing-ceramic-xs);
+  }
+  .m-ceramic-sm {
+    margin: var(--spacing-ceramic-sm);
+  }
+  .m-ceramic-md {
+    margin: var(--spacing-ceramic-md);
+  }
+  .m-ceramic-lg {
+    margin: var(--spacing-ceramic-lg);
+  }
+  .m-ceramic-xl {
+    margin: var(--spacing-ceramic-xl);
+  }
+
+  /* Ceramic Gap Classes */
+  .gap-ceramic-xs {
+    gap: var(--spacing-ceramic-xs);
+  }
+  .gap-ceramic-sm {
+    gap: var(--spacing-ceramic-sm);
+  }
+  .gap-ceramic-md {
+    gap: var(--spacing-ceramic-md);
+  }
+  .gap-ceramic-lg {
+    gap: var(--spacing-ceramic-lg);
+  }
+  .gap-ceramic-xl {
+    gap: var(--spacing-ceramic-xl);
+  }
+
+  /* Ceramic Size Classes */
+  .size-ceramic-xs {
+    width: var(--size-ceramic-xs);
+    height: var(--size-ceramic-xs);
+  }
+  .size-ceramic-sm {
+    width: var(--size-ceramic-sm);
+    height: var(--size-ceramic-sm);
+  }
+  .size-ceramic-md {
+    width: var(--size-ceramic-md);
+    height: var(--size-ceramic-md);
+  }
+  .size-ceramic-lg {
+    width: var(--size-ceramic-lg);
+    height: var(--size-ceramic-lg);
+  }
+  .size-ceramic-xl {
+    width: var(--size-ceramic-xl);
+    height: var(--size-ceramic-xl);
+  }
+
+  /* Ceramic Radius Classes */
+  .rounded-ceramic-xs {
+    border-radius: var(--radius-ceramic-xs);
+  }
+  .rounded-ceramic-sm {
+    border-radius: var(--radius-ceramic-sm);
+  }
+  .rounded-ceramic-md {
+    border-radius: var(--radius-ceramic-md);
+  }
+  .rounded-ceramic-lg {
+    border-radius: var(--radius-ceramic-lg);
+  }
+  .rounded-ceramic-xl {
+    border-radius: var(--radius-ceramic-xl);
+  }
+  .rounded-ceramic-2xl {
+    border-radius: var(--radius-ceramic-2xl);
+  }
+}
+
+/* Base Styles for Ceramic Design System */
+@layer base {
+  body {
+    font-family: var(--font-family-sans);
+    background-color: theme('colors.cream.25');
+    color: theme('colors.clay.700');
+    font-size: var(--text-ceramic-base);
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-family-display);
+    color: theme('colors.clay.800');
+    font-weight: 600;
+  }
+
+  h1 {
+    font-size: var(--text-ceramic-title);
+  }
+  h2 {
+    font-size: var(--text-ceramic-hero);
+  }
+  h3 {
+    font-size: var(--text-ceramic-4xl);
+  }
+  h4 {
+    font-size: var(--text-ceramic-3xl);
+  }
+  h5 {
+    font-size: var(--text-ceramic-2xl);
+  }
+  h6 {
+    font-size: var(--text-ceramic-xl);
+  }
 }
