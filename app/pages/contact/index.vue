@@ -394,6 +394,13 @@ useHead({
                 data-callback="onHCaptchaVerify"
                 data-expired-callback="onHCaptchaExpire"
                 data-theme="light"
+                style="
+                  min-height: 78px;
+                  width: 100%;
+                  display: block !important;
+                  visibility: visible !important;
+                  opacity: 1 !important;
+                "
               />
             </div>
 
