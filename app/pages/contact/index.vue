@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { z } from 'zod';
+
 // SEO and meta configuration
 useSeoMeta({
   title: 'Contact | Ju Keramia - Get in Touch',
@@ -43,17 +45,13 @@ const submitted = ref(false);
 const submitError = ref('');
 const hcaptchaToken = ref('');
 
-// Form validation schema
-const schema = {
-  firstName: (value: string) => value?.length >= 2 || 'First name must be at least 2 characters',
-  lastName: (value: string) => value?.length >= 2 || 'Last name must be at least 2 characters',
-  email: (value: string) => {
-    if (!value) return 'Email is required';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(value) || 'Please enter a valid email address';
-  },
-  message: (value: string) => value?.length >= 10 || 'Message must be at least 10 characters',
-};
+// Form validation schema using Zod for Nuxt UI
+const schema = z.object({
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+});
 
 // hCaptcha callback functions (accessed globally)
 if (import.meta.client) {
