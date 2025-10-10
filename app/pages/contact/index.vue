@@ -12,6 +12,17 @@ useSeoMeta({
   ogImage: '/image/contact-image.jpg',
 });
 
+// Load hCaptcha script
+useHead({
+  script: [
+    {
+      src: 'https://js.hcaptcha.com/1/api.js',
+      async: true,
+      defer: true,
+    },
+  ],
+});
+
 // Runtime config for hCaptcha
 const config = useRuntimeConfig();
 
