@@ -260,6 +260,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // Debug log email configuration
+    console.log('Email configuration:', {
+      from: config.resendFromEmail || 'contact@jukeramia.com',
+      to: config.resendToEmail || 'hello@jukeramia.com',
+      resendApiKey: config.resendApiKey ? 'SET' : 'NOT SET',
+    });
+
     // Send email via Resend
     const emailResult = await resend.emails.send({
       from: config.resendFromEmail || 'contact@jukeramia.com',
@@ -269,11 +276,13 @@ export default defineEventHandler(async (event) => {
       html: generateContactEmailHTML(emailData),
     });
 
-    // Log successful submission (for monitoring)
+    // Log detailed submission info (for debugging)
     console.log('Contact form submitted successfully:', {
-      id: emailResult.data?.id,
-      from: emailData.email,
+      emailId: emailResult.data?.id,
+      fromUser: emailData.email,
+      toEmail: config.resendToEmail || 'hello@jukeramia.com',
       timestamp: new Date().toISOString(),
+      resendResult: emailResult,
     });
 
     // Return success response
