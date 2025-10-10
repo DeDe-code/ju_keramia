@@ -50,11 +50,11 @@ export default defineAppConfig({
         // Base ceramic styling applied to ALL UButtons
         base: [
           // Typography & Spacing
-          'font-ceramic-sans !text-stone-950 rounded-ceramic-md transition-all duration-200 ease-in-out',
+          'font-ceramic-sans transition-all duration-200 ease-in-out',
           // Focus & Accessibility
           // 'focus:ring-2 focus:ring-offset-2 focus:outline-none',
           // Hover
-          'hover:!text-clay-800 cursor-pointer',
+          ' cursor-pointer',
           // States
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
           // Layout
@@ -133,7 +133,7 @@ export default defineAppConfig({
     // Input components with ceramic styling
     input: {
       slots: {
-        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] rounded-[var(--radius-ceramic-md)] border-stone-300 focus:border-clay-500 focus:ring-clay-500/20',
+        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none focus:ring-0 focus-visible:ring-0',
       },
       variants: {
         size: {
@@ -148,6 +148,29 @@ export default defineAppConfig({
           },
           lg: {
             base: 'text-[var(--text-ceramic-lg)] px-[var(--spacing-ceramic-lg)] py-[calc(var(--spacing-ceramic-lg)*0.75)] h-[var(--size-ceramic-lg)]',
+          },
+        },
+      },
+    },
+
+    // Textarea components with ceramic styling
+    textarea: {
+      slots: {
+        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none focus:ring-0 focus-visible:ring-0',
+      },
+      variants: {
+        size: {
+          xs: {
+            base: 'text-[var(--text-ceramic-xs)] px-[var(--spacing-ceramic-xs)] py-[calc(var(--spacing-ceramic-xs)*0.75)]',
+          },
+          sm: {
+            base: 'text-[var(--text-ceramic-sm)] px-[var(--spacing-ceramic-sm)] py-[calc(var(--spacing-ceramic-sm)*0.75)]',
+          },
+          md: {
+            base: 'text-[var(--text-ceramic-base)] px-[var(--spacing-ceramic-md)] py-[calc(var(--spacing-ceramic-md)*0.75)]',
+          },
+          lg: {
+            base: 'text-[var(--text-ceramic-lg)] px-[var(--spacing-ceramic-lg)] py-[calc(var(--spacing-ceramic-lg)*0.75)]',
           },
         },
       },

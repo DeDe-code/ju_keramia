@@ -10,17 +10,38 @@ useSeoMeta({
   ogImage: '/image/contact-image.jpg',
 });
 
+// Runtime config for hCaptcha
+const config = useRuntimeConfig();
+
+// Debug log for development
+if (import.meta.dev) {
+  console.log('hCaptcha Site Key:', config.public.hcaptchaSiteKey);
+}
+
+// hCaptcha type declarations
+declare global {
+  interface Window {
+    hcaptcha?: {
+      reset(): void;
+      render(element: HTMLElement, options: Record<string, unknown>): void;
+    };
+    onHCaptchaVerify?: (token: string) => void;
+    onHCaptchaExpire?: () => void;
+  }
+}
+
 // Form state management
 const form = ref({
   firstName: '',
   lastName: '',
   email: '',
   message: '',
-  newsletter: false,
 });
 
 const loading = ref(false);
 const submitted = ref(false);
+const submitError = ref('');
+const hcaptchaToken = ref('');
 
 // Form validation schema
 const schema = {
@@ -34,19 +55,45 @@ const schema = {
   message: (value: string) => value?.length >= 10 || 'Message must be at least 10 characters',
 };
 
+// hCaptcha callback functions (accessed globally)
+if (import.meta.client) {
+  window.onHCaptchaVerify = (token: string) => {
+    hcaptchaToken.value = token;
+  };
+
+  window.onHCaptchaExpire = () => {
+    hcaptchaToken.value = '';
+  };
+}
+
 // Submit handler
 const handleSubmit = async () => {
+  // Reset error state
+  submitError.value = '';
+
+  // Check for hCaptcha token
+  if (!hcaptchaToken.value) {
+    submitError.value = 'Please complete the captcha verification';
+    return;
+  }
+
   loading.value = true;
-  
+
   try {
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Here you would typically send the form data to your backend
-    console.log('Form submitted:', form.value);
-    
+    const response = await $fetch('/api/contact', {
+      method: 'POST',
+      body: {
+        firstName: form.value.firstName,
+        lastName: form.value.lastName,
+        email: form.value.email,
+        message: form.value.message,
+        hcaptchaToken: hcaptchaToken.value,
+      },
+    });
+
+    console.log('Form submitted successfully:', response);
     submitted.value = true;
-    
+
     // Reset form after successful submission
     setTimeout(() => {
       form.value = {
@@ -54,26 +101,60 @@ const handleSubmit = async () => {
         lastName: '',
         email: '',
         message: '',
-        newsletter: false,
       };
+      hcaptchaToken.value = '';
       submitted.value = false;
-    }, 3000);
-    
-  } catch (error) {
+
+      // Reset hCaptcha widget if available
+      if (import.meta.client && window.hcaptcha) {
+        window.hcaptcha.reset();
+      }
+    }, 5000);
+  } catch (error: unknown) {
     console.error('Error submitting form:', error);
+
+    if (error && typeof error === 'object' && 'data' in error) {
+      const errorData = error.data as { statusMessage?: string };
+      if (errorData?.statusMessage) {
+        submitError.value = errorData.statusMessage;
+      } else {
+        submitError.value = 'Something went wrong. Please try again later.';
+      }
+    } else if (error instanceof Error) {
+      submitError.value = error.message;
+    } else {
+      submitError.value = 'Something went wrong. Please try again later.';
+    }
+
+    // Reset hCaptcha on error
+    hcaptchaToken.value = '';
+    if (import.meta.client && window.hcaptcha) {
+      window.hcaptcha.reset();
+    }
   } finally {
     loading.value = false;
   }
 };
+
+// Load hCaptcha script
+useHead({
+  script: [
+    {
+      src: 'https://js.hcaptcha.com/1/api.js',
+      async: true,
+      defer: true,
+    },
+  ],
+});
 </script>
 
 <template>
   <div class="min-h-screen bg-cream-25 py-ceramic-xl px-ceramic-md">
     <div class="max-w-7xl mx-auto">
-      <div class="grid lg:grid-cols-2 gap-ceramic-xl items-center">
+      <div class="grid md:grid-cols-2 gap-ceramic-xl items-center">
         <!-- Image Section -->
         <div class="order-first lg:order-first">
-          <div class="relative">
+          <div class="relative mt-ceramic-xs">
             <NuxtImg
               src="/image/contact-image.jpg"
               alt="Handcrafted ceramic bowls showcasing the artisanal craftsmanship of Ju Keramia"
@@ -82,29 +163,45 @@ const handleSubmit = async () => {
               loading="lazy"
               width="600"
               height="600"
-              class="w-full h-auto rounded-ceramic-lg shadow-lg object-cover"
-              sizes="(max-width: 640px) 90vw, (max-width: 768px) 70vw, (max-width: 1024px) 50vw, 600px"
+              class="w-full md:min-h-[615px] shadow-lg object-cover"
             />
           </div>
         </div>
 
         <!-- Form Section -->
-        <div class="space-y-ceramic-lg">
+        <div>
           <!-- Heading -->
-          <div class="space-y-ceramic-sm">
-            <h1 class="font-ceramic-display text-ceramic-4xl text-clay-950 mb-ceramic-md">
+          <div class="mb-ceramic-md">
+            <h1 class="font-ceramic-display text-ceramic-4xl text-clay-950 mb-ceramic-sm">
               contact.
             </h1>
-            
-            <p class="text-stone-600 leading-relaxed text-responsive-base">
-              Interested in a collaboration? Fancy some tableware for your café or restaurant, or even
-              a bespoke dinner set for your home? Fill in the form below and let's get designing and
-              making together.
+
+            <p class="text-stone-600 leading-relaxed">
+              Interested in a collaboration? Fancy some tableware for your café or restaurant, or
+              even a bespoke dinner set for your home? Fill in the form below and let's get
+              designing and making together.
             </p>
           </div>
 
+          <!-- Error Message -->
+          <div
+            v-if="submitError"
+            class="bg-red-50 border border-red-200 rounded-ceramic-md p-ceramic-md mb-ceramic-md"
+          >
+            <div class="flex items-center gap-ceramic-xs">
+              <UIcon
+                name="i-heroicons-exclamation-triangle"
+                class="text-red-600 !text-ceramic-lg"
+              />
+              <p class="text-red-800 font-medium">{{ submitError }}</p>
+            </div>
+          </div>
+
           <!-- Success Message -->
-          <div v-if="submitted" class="bg-sage-50 border border-sage-200 rounded-ceramic-md p-ceramic-md">
+          <div
+            v-if="submitted"
+            class="bg-sage-50 border border-sage-200 rounded-ceramic-md p-ceramic-md"
+          >
             <div class="flex items-center gap-ceramic-xs">
               <UIcon name="i-heroicons-check-circle" class="text-sage-600 !text-ceramic-lg" />
               <p class="text-sage-800 font-medium">
@@ -114,15 +211,9 @@ const handleSubmit = async () => {
           </div>
 
           <!-- Contact Form -->
-          <UForm
-            v-if="!submitted"
-            :schema="schema"
-            :state="form"
-            class="space-y-ceramic-md"
-            @submit="handleSubmit"
-          >
+          <UForm v-if="!submitted" :schema="schema" :state="form" @submit="handleSubmit">
             <!-- Name Fields -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-ceramic-sm">
+            <div class="flex flex-col w-full md:gap-ceramic-md mb-ceramic-md">
               <!-- First Name -->
               <div class="space-y-ceramic-xs">
                 <label class="block text-stone-700 font-medium text-ceramic-sm">
@@ -132,10 +223,10 @@ const handleSubmit = async () => {
                   v-model="form.firstName"
                   name="firstName"
                   placeholder="First Name"
-                  size="md"
+                  size="lg"
                   color="neutral"
                   variant="outline"
-                  class="bg-cream-50"
+                  class="w-full bg-cream-50"
                 />
               </div>
 
@@ -148,16 +239,16 @@ const handleSubmit = async () => {
                   v-model="form.lastName"
                   name="lastName"
                   placeholder="Last Name"
-                  size="md"
+                  size="lg"
                   color="neutral"
                   variant="outline"
-                  class="bg-cream-50"
+                  class="w-full bg-cream-50"
                 />
               </div>
             </div>
 
             <!-- Email Field -->
-            <div class="space-y-ceramic-xs">
+            <div class="w-full space-y-ceramic-xs mb-ceramic-md">
               <label class="block text-stone-700 font-medium text-ceramic-sm">
                 Email <span class="text-clay-600">*</span>
               </label>
@@ -166,26 +257,15 @@ const handleSubmit = async () => {
                 name="email"
                 type="email"
                 placeholder="your.email@example.com"
-                size="md"
+                size="lg"
                 color="neutral"
                 variant="outline"
-                class="bg-cream-50"
-              />
-            </div>
-
-            <!-- Newsletter Checkbox -->
-            <div class="space-y-ceramic-xs">
-              <UCheckbox
-                v-model="form.newsletter"
-                name="newsletter"
-                label="Sign up for news and updates"
-                color="neutral"
-                class="text-stone-600"
+                class="w-full bg-cream-50"
               />
             </div>
 
             <!-- Message Field -->
-            <div class="space-y-ceramic-xs">
+            <div class="w-full space-y-ceramic-xs mb-ceramic-md">
               <label class="block text-stone-700 font-medium text-ceramic-sm">
                 Message <span class="text-clay-600">*</span>
               </label>
@@ -194,11 +274,21 @@ const handleSubmit = async () => {
                 name="message"
                 placeholder="Tell me about your project, ideas, or any questions you have..."
                 :rows="6"
-                size="md"
+                size="lg"
                 color="neutral"
-                variant="outline"
-                class="bg-cream-50"
+                class="w-full bg-cream-50"
                 autoresize
+              />
+            </div>
+
+            <!-- hCaptcha Widget -->
+            <div class="mb-ceramic-md">
+              <div
+                class="h-captcha"
+                :data-sitekey="config.public.hcaptchaSiteKey"
+                data-callback="onHCaptchaVerify"
+                data-expired-callback="onHCaptchaExpire"
+                data-theme="light"
               />
             </div>
 
@@ -208,18 +298,18 @@ const handleSubmit = async () => {
                 type="submit"
                 size="lg"
                 color="neutral"
-                variant="solid"
                 :loading="loading"
                 :disabled="loading"
-                class="w-full md:w-auto px-ceramic-lg py-ceramic-sm bg-clay-700 hover:bg-clay-800 text-cream-25"
+                class="w-full md:w-[20rem] px-ceramic-lg py-ceramic-sm bg-clay-700 hover:bg-stone-700 text-cream-25 rounded-none"
               >
                 <template v-if="loading">
-                  <UIcon name="i-heroicons-arrow-path" class="animate-spin !text-ceramic-base mr-2" />
+                  <UIcon
+                    name="i-heroicons-arrow-path"
+                    class="animate-spin !text-ceramic-base mr-2"
+                  />
                   Sending...
                 </template>
-                <template v-else>
-                  Submit
-                </template>
+                <template v-else> Submit </template>
               </UButton>
             </div>
           </UForm>
@@ -228,16 +318,3 @@ const handleSubmit = async () => {
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Custom styles for form elements to match ceramic design */
-:deep(.bg-cream-50) {
-  background-color: var(--color-cream-50);
-  border-color: var(--color-stone-300);
-}
-
-:deep(.bg-cream-50:focus) {
-  border-color: var(--color-clay-600);
-  box-shadow: 0 0 0 1px var(--color-clay-600);
-}
-</style>
