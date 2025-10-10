@@ -24,8 +24,8 @@ if (import.meta.dev) {
 declare global {
   interface Window {
     hcaptcha?: {
-      reset(): void;
-      render(element: HTMLElement, options: Record<string, unknown>): void;
+      reset(widgetId?: string): void;
+      render(element: HTMLElement, options: Record<string, unknown>): string;
     };
     onHCaptchaVerify?: (token: string) => void;
     onHCaptchaExpire?: () => void;
@@ -44,6 +44,7 @@ const loading = ref(false);
 const submitted = ref(false);
 const submitError = ref('');
 const hcaptchaToken = ref('');
+const hcaptchaKey = ref(0); // Key to force re-render of hCaptcha
 
 // Form validation schema using Zod for Nuxt UI
 const schema = z.object({
@@ -63,6 +64,23 @@ if (import.meta.client) {
     hcaptchaToken.value = '';
   };
 }
+
+// Helper function to reset hCaptcha automatically
+const resetHCaptcha = () => {
+  if (import.meta.client) {
+    try {
+      // Simple automated reset using Vue reactivity
+      hcaptchaToken.value = '';
+      hcaptchaKey.value += 1; // Force re-render of hCaptcha component
+      console.log('hCaptcha reset automatically with key:', hcaptchaKey.value);
+      return true;
+    } catch (error) {
+      console.warn('Failed to reset hCaptcha:', error);
+      return false;
+    }
+  }
+  return false;
+};
 
 // Submit handler
 const handleSubmit = async () => {
@@ -101,15 +119,7 @@ const handleSubmit = async () => {
     submitted.value = true;
 
     // Reset hCaptcha immediately after successful submission
-    if (import.meta.client && window.hcaptcha) {
-      try {
-        window.hcaptcha.reset();
-        hcaptchaToken.value = '';
-        console.log('hCaptcha reset successfully');
-      } catch (error) {
-        console.warn('Failed to reset hCaptcha:', error);
-      }
-    }
+    resetHCaptcha();
 
     // Reset form after successful submission
     setTimeout(() => {
@@ -123,29 +133,14 @@ const handleSubmit = async () => {
       submitted.value = false;
 
       // Reset hCaptcha widget again if available
-      if (import.meta.client && window.hcaptcha) {
-        try {
-          window.hcaptcha.reset();
-          console.log('hCaptcha reset again after timeout');
-        } catch (error) {
-          console.warn('Failed to reset hCaptcha in timeout:', error);
-        }
-      }
+      resetHCaptcha();
     }, 5000);
   } catch (error: unknown) {
     console.error('Error submitting form:', error);
     console.error('Error details:', JSON.stringify(error, null, 2));
 
     // Reset hCaptcha on error so user can try again
-    if (import.meta.client && window.hcaptcha) {
-      try {
-        window.hcaptcha.reset();
-        hcaptchaToken.value = '';
-        console.log('hCaptcha reset after error');
-      } catch (resetError) {
-        console.warn('Failed to reset hCaptcha after error:', resetError);
-      }
-    }
+    resetHCaptcha();
 
     if (error && typeof error === 'object' && 'data' in error) {
       const errorData = error.data as { statusMessage?: string };
@@ -318,6 +313,7 @@ useHead({
             <!-- hCaptcha Widget -->
             <div class="mb-ceramic-md">
               <div
+                :key="hcaptchaKey"
                 class="h-captcha"
                 :data-sitekey="config.public.hcaptchaSiteKey"
                 data-callback="onHCaptchaVerify"
