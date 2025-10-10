@@ -2,15 +2,21 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: [
-    '@nuxt/content',
-    '@nuxt/eslint',
-    '@nuxt/image',
-    '@nuxt/ui',
-    '@nuxt/icon',
-    '@nuxtjs/google-fonts',
-  ],
+  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/ui', '@nuxt/icon', '@nuxtjs/google-fonts'],
   css: ['./app/assets/css/main.css'],
+
+  // Runtime configuration for API keys
+  runtimeConfig: {
+    // Private keys (only available on server-side)
+    resendApiKey: process.env.NUXT_RESEND_API_KEY,
+    hcaptchaSecretKey: process.env.NUXT_HCAPTCHA_SECRET_KEY,
+    resendToEmail: process.env.NUXT_RESEND_TO_EMAIL || 'hello@jukeramia.com',
+    resendFromEmail: process.env.NUXT_RESEND_FROM_EMAIL || 'contact@jukeramia.com',
+    // Public keys (exposed to client-side)
+    public: {
+      hcaptchaSiteKey: process.env.NUXT_PUBLIC_HCAPTCHA_SITE_KEY,
+    },
+  },
 
   // Enable modern View Transitions API for smooth page transitions
   experimental: {
