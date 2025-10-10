@@ -78,6 +78,14 @@ const handleSubmit = async () => {
   loading.value = true;
 
   try {
+    console.log('Submitting form to /api/contact with data:', {
+      firstName: form.value.firstName,
+      lastName: form.value.lastName,
+      email: form.value.email,
+      message: form.value.message,
+      hcaptchaToken: hcaptchaToken.value ? 'TOKEN_PROVIDED' : 'NO_TOKEN',
+    });
+
     const response = await $fetch('/api/contact', {
       method: 'POST',
       body: {
@@ -110,6 +118,7 @@ const handleSubmit = async () => {
     }, 5000);
   } catch (error: unknown) {
     console.error('Error submitting form:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
 
     if (error && typeof error === 'object' && 'data' in error) {
       const errorData = error.data as { statusMessage?: string };
