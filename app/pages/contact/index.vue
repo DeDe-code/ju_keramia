@@ -100,6 +100,17 @@ const handleSubmit = async () => {
     console.log('Form submitted successfully:', response);
     submitted.value = true;
 
+    // Reset hCaptcha immediately after successful submission
+    if (import.meta.client && window.hcaptcha) {
+      try {
+        window.hcaptcha.reset();
+        hcaptchaToken.value = '';
+        console.log('hCaptcha reset successfully');
+      } catch (error) {
+        console.warn('Failed to reset hCaptcha:', error);
+      }
+    }
+
     // Reset form after successful submission
     setTimeout(() => {
       form.value = {
@@ -111,14 +122,30 @@ const handleSubmit = async () => {
       hcaptchaToken.value = '';
       submitted.value = false;
 
-      // Reset hCaptcha widget if available
+      // Reset hCaptcha widget again if available
       if (import.meta.client && window.hcaptcha) {
-        window.hcaptcha.reset();
+        try {
+          window.hcaptcha.reset();
+          console.log('hCaptcha reset again after timeout');
+        } catch (error) {
+          console.warn('Failed to reset hCaptcha in timeout:', error);
+        }
       }
     }, 5000);
   } catch (error: unknown) {
     console.error('Error submitting form:', error);
     console.error('Error details:', JSON.stringify(error, null, 2));
+
+    // Reset hCaptcha on error so user can try again
+    if (import.meta.client && window.hcaptcha) {
+      try {
+        window.hcaptcha.reset();
+        hcaptchaToken.value = '';
+        console.log('hCaptcha reset after error');
+      } catch (resetError) {
+        console.warn('Failed to reset hCaptcha after error:', resetError);
+      }
+    }
 
     if (error && typeof error === 'object' && 'data' in error) {
       const errorData = error.data as { statusMessage?: string };
