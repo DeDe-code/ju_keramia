@@ -26,6 +26,15 @@ useHead({
 // Runtime config for hCaptcha
 const config = useRuntimeConfig();
 
+// Debug: Check environment variables in production
+if (import.meta.client) {
+  console.log(
+    '🔧 DEBUG: hCaptcha Site Key:',
+    config.public.hcaptchaSiteKey ? 'Present' : 'MISSING'
+  );
+  console.log('🔧 DEBUG: Config object:', config.public);
+}
+
 // Robust hCaptcha initialization
 onMounted(() => {
   if (import.meta.client) {
@@ -59,6 +68,8 @@ const renderHCaptcha = (retryCount = 0) => {
   }
 
   if (!config.public.hcaptchaSiteKey) {
+    console.error('🚨 PRODUCTION ERROR: hCaptcha site key not available in runtime config');
+    console.log('🔧 Available config keys:', Object.keys(config.public));
     return;
   }
 
