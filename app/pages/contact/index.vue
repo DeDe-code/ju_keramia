@@ -12,16 +12,43 @@ useSeoMeta({
   ogImage: '/image/contact-image.jpg',
 });
 
-// Load hCaptcha script
+// Load hCaptcha script with better error handling and fallback
 useHead({
   script: [
     {
       src: 'https://js.hcaptcha.com/1/api.js',
       async: true,
       defer: true,
+      onload: 'window.hcaptchaLoaded = true',
+      onerror: 'console.error("Failed to load hCaptcha script from CDN")',
     },
   ],
 });
+
+// Alternative script loading method for fallback
+if (import.meta.client) {
+  // Ensure script loads even if useHead fails
+  const ensureHCaptchaScript = () => {
+    if (!document.querySelector('script[src*="hcaptcha.com"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://js.hcaptcha.com/1/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        window.hcaptchaLoaded = true;
+        console.log('🔧 DEBUG: hCaptcha script loaded via fallback method');
+      };
+      script.onerror = () => {
+        console.error('🚨 CRITICAL: hCaptcha script failed to load via fallback');
+      };
+      document.head.appendChild(script);
+      console.log('🔧 DEBUG: Attempting fallback hCaptcha script loading');
+    }
+  };
+
+  // Try fallback loading after a delay
+  setTimeout(ensureHCaptchaScript, 1000);
+}
 
 // Runtime config for hCaptcha
 const config = useRuntimeConfig();
@@ -39,13 +66,35 @@ if (import.meta.client) {
 onMounted(() => {
   if (import.meta.client) {
     // Start checking for hCaptcha availability immediately
-    const initializeHCaptcha = () => {
+    const initializeHCaptcha = (attempts = 0) => {
+      const maxAttempts = 50; // Increase max attempts
+
       if (window.hcaptcha && config.public.hcaptchaSiteKey) {
         // hCaptcha is loaded and we have the site key
+        console.log('🔧 DEBUG: hCaptcha ready, rendering widget (attempt:', attempts + 1, ')');
         renderHCaptcha();
+      } else if (attempts < maxAttempts) {
+        // Log what's missing for debugging
+        if (!window.hcaptcha) {
+          console.log(
+            '🔧 DEBUG: Waiting for hCaptcha script to load... (attempt:',
+            attempts + 1,
+            ')'
+          );
+        }
+        if (!config.public.hcaptchaSiteKey) {
+          console.log('🔧 DEBUG: Waiting for site key... (attempt:', attempts + 1, ')');
+        }
+        // Keep checking every 200ms until available
+        setTimeout(() => initializeHCaptcha(attempts + 1), 200);
       } else {
-        // Keep checking every 100ms until available
-        setTimeout(initializeHCaptcha, 100);
+        console.error('🚨 CRITICAL: Failed to initialize hCaptcha after', maxAttempts, 'attempts');
+        console.log(
+          '🔧 DEBUG: Final state - window.hcaptcha:',
+          !!window.hcaptcha,
+          'siteKey:',
+          !!config.public.hcaptchaSiteKey
+        );
       }
     };
 
@@ -92,23 +141,33 @@ const renderHCaptcha = (retryCount = 0) => {
     // Clear any existing content
     hcaptchaElement.innerHTML = '';
 
-    // Render new widget
+    // Render new widget with enhanced error handling
     const widgetId = window.hcaptcha.render(hcaptchaElement, {
       sitekey: config.public.hcaptchaSiteKey,
       callback: (token: string) => {
         hcaptchaToken.value = token;
+        console.log('🔧 DEBUG: hCaptcha verification successful');
       },
       'expired-callback': () => {
         hcaptchaToken.value = '';
+        console.log('🔧 DEBUG: hCaptcha token expired');
       },
       'error-callback': (_error: string) => {
-        // Silent error handling for hCaptcha errors
+        console.error('🚨 hCaptcha error callback triggered:', _error);
+        // Try to reset and re-render on error
+        setTimeout(() => {
+          if (retryCount < 5) {
+            console.log('🔧 DEBUG: Retrying hCaptcha render due to error');
+            renderHCaptcha(retryCount + 1);
+          }
+        }, 1000);
       },
       theme: 'light',
       size: 'normal',
     });
 
     hcaptchaWidgetId.value = widgetId;
+    console.log('🔧 DEBUG: hCaptcha widget rendered successfully with ID:', widgetId);
   } catch {
     // Silent retry on hCaptcha render errors
     if (retryCount < 10) {
@@ -124,6 +183,7 @@ declare global {
       reset(widgetId?: string): void;
       render(element: HTMLElement, options: Record<string, unknown>): string;
     };
+    hcaptchaLoaded?: boolean;
     onHCaptchaVerify?: (token: string) => void;
     onHCaptchaExpire?: () => void;
     onHCaptchaLoaded?: () => void;
