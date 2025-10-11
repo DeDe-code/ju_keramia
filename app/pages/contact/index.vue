@@ -75,20 +75,36 @@ onMounted(() => {
         document.head.appendChild(script);
       } else {
         // Try manual render if needed
-        const hcaptchaElement = document.querySelector('.h-captcha');
+        const hcaptchaElement = document.querySelector('.h-captcha') as HTMLElement;
         if (hcaptchaElement && !hcaptchaElement.hasChildNodes()) {
           console.log('Attempting manual hCaptcha render...');
+          console.log('Element found:', hcaptchaElement);
+          console.log('Element dimensions:', {
+            width: hcaptchaElement.offsetWidth,
+            height: hcaptchaElement.offsetHeight,
+            visible: hcaptchaElement.offsetParent !== null,
+          });
+
           try {
-            window.hcaptcha.render(hcaptchaElement as HTMLElement, {
+            window.hcaptcha.render(hcaptchaElement, {
               sitekey: config.public.hcaptchaSiteKey,
               callback: 'onHCaptchaVerify',
               'expired-callback': 'onHCaptchaExpire',
               theme: 'light',
             });
             console.log('Manual render successful');
+
+            // Check if content was added
+            setTimeout(() => {
+              console.log('After render - element has children:', hcaptchaElement.hasChildNodes());
+              console.log('Element innerHTML length:', hcaptchaElement.innerHTML.length);
+            }, 1000);
           } catch (error) {
             console.error('Manual render failed:', error);
           }
+        } else if (hcaptchaElement) {
+          console.log('hCaptcha element already has content:', hcaptchaElement.hasChildNodes());
+          console.log('Element innerHTML length:', hcaptchaElement.innerHTML.length);
         }
       }
     }, 2000);
@@ -387,21 +403,30 @@ useHead({
 
             <!-- hCaptcha Widget -->
             <div class="mb-ceramic-md">
-              <div
-                :key="hcaptchaKey"
-                class="h-captcha"
-                :data-sitekey="config.public.hcaptchaSiteKey"
-                data-callback="onHCaptchaVerify"
-                data-expired-callback="onHCaptchaExpire"
-                data-theme="light"
-                style="
-                  min-height: 78px;
-                  width: 100%;
-                  display: block !important;
-                  visibility: visible !important;
-                  opacity: 1 !important;
-                "
-              />
+              <!-- Debug wrapper to see the captcha area -->
+              <div style="border: 2px solid red; padding: 10px; background: yellow">
+                <p style="margin: 0 0 10px 0; font-weight: bold">hCaptcha should appear below:</p>
+                <div
+                  :key="hcaptchaKey"
+                  class="h-captcha"
+                  :data-sitekey="config.public.hcaptchaSiteKey"
+                  data-callback="onHCaptchaVerify"
+                  data-expired-callback="onHCaptchaExpire"
+                  data-theme="light"
+                  style="
+                    min-height: 78px;
+                    width: 100%;
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    border: 1px solid blue;
+                    background: lightblue;
+                  "
+                />
+                <p style="margin: 10px 0 0 0; font-size: 12px">
+                  If no captcha appears above, there's a rendering issue
+                </p>
+              </div>
             </div>
 
             <!-- Submit Button -->
