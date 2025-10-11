@@ -26,25 +26,22 @@ useHead({
 // Runtime config for hCaptcha
 const config = useRuntimeConfig();
 
-// Global callback function for when hCaptcha script loads
-if (import.meta.client) {
-  window.onHCaptchaLoaded = () => {
-    setTimeout(() => {
-      renderHCaptcha();
-    }, 100);
-  };
-}
-
-// Simple hCaptcha initialization
+// Robust hCaptcha initialization
 onMounted(() => {
   if (import.meta.client) {
-    // Check if hCaptcha is already loaded
-    if (window.hcaptcha) {
-      setTimeout(() => {
+    // Start checking for hCaptcha availability immediately
+    const initializeHCaptcha = () => {
+      if (window.hcaptcha && config.public.hcaptchaSiteKey) {
+        // hCaptcha is loaded and we have the site key
         renderHCaptcha();
-      }, 100);
-    }
-    // If not loaded, the onHCaptchaLoaded callback will handle it
+      } else {
+        // Keep checking every 100ms until available
+        setTimeout(initializeHCaptcha, 100);
+      }
+    };
+
+    // Start the initialization process
+    initializeHCaptcha();
   }
 });
 
@@ -62,7 +59,6 @@ const renderHCaptcha = (retryCount = 0) => {
   }
 
   if (!config.public.hcaptchaSiteKey) {
-    console.error('hCaptcha site key not available');
     return;
   }
 
@@ -94,16 +90,16 @@ const renderHCaptcha = (retryCount = 0) => {
       'expired-callback': () => {
         hcaptchaToken.value = '';
       },
-      'error-callback': (error: string) => {
-        console.error('hCaptcha error:', error);
+      'error-callback': (_error: string) => {
+        // Silent error handling for hCaptcha errors
       },
       theme: 'light',
       size: 'normal',
     });
 
     hcaptchaWidgetId.value = widgetId;
-  } catch (error) {
-    console.warn('Failed to render hCaptcha:', error);
+  } catch {
+    // Silent retry on hCaptcha render errors
     if (retryCount < 10) {
       setTimeout(() => {
         renderHCaptcha(retryCount + 1);
@@ -205,8 +201,8 @@ const resetHCaptcha = () => {
       hcaptchaWidgetId.value = null;
 
       return true;
-    } catch (error) {
-      console.warn('Failed to reset hCaptcha:', error);
+    } catch {
+      // Silent reset handling
       return false;
     }
   }
