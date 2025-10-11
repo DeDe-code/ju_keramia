@@ -40,7 +40,81 @@ onMounted(() => {
     console.log('window.hcaptcha exists:', !!window.hcaptcha);
     console.log('hCaptcha site key:', config.public.hcaptchaSiteKey);
 
-    // Wait a bit for script to load
+    // Function to attempt hCaptcha rendering
+    const attemptRender = () => {
+      const hcaptchaElement = document.querySelector('.h-captcha') as HTMLElement;
+      if (hcaptchaElement && window.hcaptcha) {
+        console.log('Attempting to render hCaptcha...');
+        console.log('Element:', hcaptchaElement);
+        console.log('Site key:', config.public.hcaptchaSiteKey);
+
+        try {
+          // Clear any existing content first
+          hcaptchaElement.innerHTML = '';
+
+          const widgetId = window.hcaptcha.render(hcaptchaElement, {
+            sitekey: config.public.hcaptchaSiteKey,
+            callback: 'onHCaptchaVerify',
+            'expired-callback': 'onHCaptchaExpire',
+            theme: 'light',
+          });
+
+          console.log('hCaptcha render successful, widget ID:', widgetId);
+
+          // Check if content was added
+          setTimeout(() => {
+            console.log('After render check:');
+            console.log('- Element has children:', hcaptchaElement.hasChildNodes());
+            console.log('- innerHTML length:', hcaptchaElement.innerHTML.length);
+            console.log('- Element content preview:', hcaptchaElement.innerHTML.substring(0, 100));
+          }, 1000);
+        } catch (error) {
+          console.error('hCaptcha render failed:', error);
+
+          // Try alternative rendering method
+          console.log('Trying alternative render method...');
+          try {
+            // Remove any existing hCaptcha widgets first
+            if (window.hcaptcha.reset) {
+              window.hcaptcha.reset();
+            }
+
+            // Wait a bit and try again
+            setTimeout(() => {
+              if (window.hcaptcha) {
+                const altWidgetId = window.hcaptcha.render(hcaptchaElement, {
+                  sitekey: config.public.hcaptchaSiteKey,
+                  callback: (token: string) => {
+                    console.log('hCaptcha callback triggered:', token);
+                    hcaptchaToken.value = token;
+                  },
+                  'expired-callback': () => {
+                    console.log('hCaptcha expired');
+                    hcaptchaToken.value = '';
+                  },
+                  theme: 'light',
+                });
+                console.log('Alternative render successful, widget ID:', altWidgetId);
+              }
+            }, 500);
+          } catch (altError) {
+            console.error('Alternative render also failed:', altError);
+          }
+        }
+      } else {
+        console.error('Cannot render: element or hcaptcha missing', {
+          element: !!hcaptchaElement,
+          hcaptcha: !!window.hcaptcha,
+        });
+      }
+    };
+
+    // Try rendering immediately if hCaptcha is already loaded
+    if (window.hcaptcha) {
+      attemptRender();
+    }
+
+    // Wait a bit for script to load and try again
     setTimeout(() => {
       console.log('After timeout - window.hcaptcha exists:', !!window.hcaptcha);
       if (!window.hcaptcha) {
@@ -55,57 +129,14 @@ onMounted(() => {
           console.log('hCaptcha script loaded manually');
           // Try to render after manual load
           setTimeout(() => {
-            const hcaptchaElement = document.querySelector('.h-captcha');
-            if (hcaptchaElement && window.hcaptcha) {
-              try {
-                window.hcaptcha.render(hcaptchaElement as HTMLElement, {
-                  sitekey: config.public.hcaptchaSiteKey,
-                  callback: 'onHCaptchaVerify',
-                  'expired-callback': 'onHCaptchaExpire',
-                  theme: 'light',
-                });
-                console.log('Manual render after script injection successful');
-              } catch (error) {
-                console.error('Manual render after script injection failed:', error);
-              }
-            }
+            attemptRender();
           }, 500);
         };
         script.onerror = () => console.error('Manual script injection failed');
         document.head.appendChild(script);
       } else {
-        // Try manual render if needed
-        const hcaptchaElement = document.querySelector('.h-captcha') as HTMLElement;
-        if (hcaptchaElement && !hcaptchaElement.hasChildNodes()) {
-          console.log('Attempting manual hCaptcha render...');
-          console.log('Element found:', hcaptchaElement);
-          console.log('Element dimensions:', {
-            width: hcaptchaElement.offsetWidth,
-            height: hcaptchaElement.offsetHeight,
-            visible: hcaptchaElement.offsetParent !== null,
-          });
-
-          try {
-            window.hcaptcha.render(hcaptchaElement, {
-              sitekey: config.public.hcaptchaSiteKey,
-              callback: 'onHCaptchaVerify',
-              'expired-callback': 'onHCaptchaExpire',
-              theme: 'light',
-            });
-            console.log('Manual render successful');
-
-            // Check if content was added
-            setTimeout(() => {
-              console.log('After render - element has children:', hcaptchaElement.hasChildNodes());
-              console.log('Element innerHTML length:', hcaptchaElement.innerHTML.length);
-            }, 1000);
-          } catch (error) {
-            console.error('Manual render failed:', error);
-          }
-        } else if (hcaptchaElement) {
-          console.log('hCaptcha element already has content:', hcaptchaElement.hasChildNodes());
-          console.log('Element innerHTML length:', hcaptchaElement.innerHTML.length);
-        }
+        // hCaptcha script is loaded, try rendering
+        attemptRender();
       }
     }, 2000);
   }
