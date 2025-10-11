@@ -29,21 +29,43 @@ const config = useRuntimeConfig();
 // Simple hCaptcha initialization
 onMounted(() => {
   if (import.meta.client) {
-    // Wait for hCaptcha script to load and ClientOnly to mount
+    // Multiple initialization strategies for reliable first-time loading
     const initializeHCaptcha = () => {
       if (window.hcaptcha) {
-        // Wait a bit longer for ClientOnly to mount the element
+        // Strategy 1: Direct render attempt
         setTimeout(() => {
           renderHCaptcha();
-        }, 200);
+        }, 100);
+
+        // Strategy 2: Delayed render for slower connections
+        setTimeout(() => {
+          renderHCaptcha();
+        }, 500);
+
+        // Strategy 3: Final render attempt
+        setTimeout(() => {
+          renderHCaptcha();
+        }, 1000);
       } else {
-        // Check again after a short delay
+        // hCaptcha script not loaded yet, retry
         setTimeout(initializeHCaptcha, 100);
       }
     };
 
-    // Start initialization after a brief delay to ensure ClientOnly is ready
-    setTimeout(initializeHCaptcha, 100);
+    // Start initialization immediately
+    initializeHCaptcha();
+
+    // Additional strategy: Listen for script load events
+    if (!window.hcaptcha) {
+      const script = document.querySelector('script[src*="hcaptcha.com"]');
+      if (script) {
+        script.addEventListener('load', () => {
+          setTimeout(() => {
+            renderHCaptcha();
+          }, 100);
+        });
+      }
+    }
   }
 });
 
@@ -54,7 +76,8 @@ const renderHCaptcha = (retryCount = 0) => {
   const hcaptchaElement = document.querySelector('.h-captcha') as HTMLElement;
   if (!hcaptchaElement) {
     // Element not found, retry if we haven't exceeded retry limit
-    if (retryCount < 10) {
+    if (retryCount < 15) {
+      // Increased retry limit
       setTimeout(() => {
         renderHCaptcha(retryCount + 1);
       }, 100);
@@ -62,7 +85,12 @@ const renderHCaptcha = (retryCount = 0) => {
     return;
   }
 
-  if (hcaptchaElement && !hcaptchaElement.hasChildNodes() && window.hcaptcha) {
+  // Check if widget is already rendered
+  if (hcaptchaElement.hasChildNodes() && hcaptchaElement.children.length > 0) {
+    return; // Already rendered
+  }
+
+  if (window.hcaptcha) {
     try {
       // Clear any existing content
       hcaptchaElement.innerHTML = '';
@@ -77,16 +105,25 @@ const renderHCaptcha = (retryCount = 0) => {
           hcaptchaToken.value = '';
         },
         theme: 'light',
+        size: 'normal',
       });
 
       hcaptchaWidgetId.value = widgetId;
+
+      // Verify render was successful
+      setTimeout(() => {
+        if (!hcaptchaElement.hasChildNodes() && retryCount < 10) {
+          // Render failed, try again
+          renderHCaptcha(retryCount + 1);
+        }
+      }, 200);
     } catch (error) {
       console.warn('Failed to render hCaptcha:', error);
       // Retry on error if we haven't exceeded retry limit
-      if (retryCount < 5) {
+      if (retryCount < 8) {
         setTimeout(() => {
           renderHCaptcha(retryCount + 1);
-        }, 200);
+        }, 300);
       }
     }
   }
@@ -138,10 +175,10 @@ if (import.meta.client) {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
             if (element.classList?.contains('h-captcha') || element.querySelector?.('.h-captcha')) {
-              // Element found, try to render
-              setTimeout(() => {
-                renderHCaptcha(0);
-              }, 50);
+              // Element found, try to render with multiple attempts
+              setTimeout(() => renderHCaptcha(0), 50);
+              setTimeout(() => renderHCaptcha(0), 200);
+              setTimeout(() => renderHCaptcha(0), 500);
               observer.disconnect(); // Stop observing once we've found it
             }
           }
@@ -154,14 +191,27 @@ if (import.meta.client) {
       subtree: true,
     });
 
-    // Clean up observer after 10 seconds
+    // Clean up observer after 15 seconds
     setTimeout(() => {
       observer.disconnect();
-    }, 10000);
+    }, 15000);
   };
 
   onMounted(() => {
-    setTimeout(observeHCaptchaElement, 100);
+    setTimeout(observeHCaptchaElement, 50);
+  });
+
+  // Additional strategy: Page visibility change (when user switches tabs)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      // Page became visible, check if hCaptcha needs rendering
+      setTimeout(() => {
+        const element = document.querySelector('.h-captcha') as HTMLElement;
+        if (element && !element.hasChildNodes()) {
+          renderHCaptcha(0);
+        }
+      }, 100);
+    }
   });
 }
 
