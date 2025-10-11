@@ -12,15 +12,16 @@ useSeoMeta({
   ogImage: '/image/contact-image.jpg',
 });
 
-// Load hCaptcha script with better error handling and fallback
+// Load hCaptcha script with better error handling and SSR compatibility
 useHead({
   script: [
     {
       src: 'https://js.hcaptcha.com/1/api.js',
       async: true,
-      defer: true,
-      onload: 'window.hcaptchaLoaded = true',
-      onerror: 'console.error("Failed to load hCaptcha script from CDN")',
+      defer: false, // Remove defer to load script earlier
+      onload:
+        'window.hcaptchaLoaded = true; console.log("🔧 DEBUG: hCaptcha script loaded via useHead")',
+      onerror: 'console.error("🚨 Failed to load hCaptcha script from CDN")',
     },
   ],
 });
@@ -48,6 +49,11 @@ if (import.meta.client) {
 
   // Try fallback loading after a delay
   setTimeout(ensureHCaptchaScript, 1000);
+
+  // Also try when window is fully loaded (for first-time visits)
+  window.addEventListener('load', () => {
+    setTimeout(ensureHCaptchaScript, 500);
+  });
 }
 
 // Runtime config for hCaptcha
@@ -60,46 +66,58 @@ if (import.meta.client) {
     config.public.hcaptchaSiteKey ? 'Present' : 'MISSING'
   );
   console.log('🔧 DEBUG: Config object:', config.public);
+  console.log('🔧 DEBUG: Current domain:', window.location.hostname);
+  console.log('🔧 DEBUG: Site key value:', config.public.hcaptchaSiteKey);
 }
 
 // Robust hCaptcha initialization
 onMounted(() => {
   if (import.meta.client) {
-    // Start checking for hCaptcha availability immediately
-    const initializeHCaptcha = (attempts = 0) => {
-      const maxAttempts = 50; // Increase max attempts
+    // Wait for full hydration and DOM to be fully ready
+    nextTick(() => {
+      // Additional delay to ensure all scripts are loaded after SSR hydration
+      setTimeout(() => {
+        // Start checking for hCaptcha availability immediately
+        const initializeHCaptcha = (attempts = 0) => {
+          const maxAttempts = 100; // Increase max attempts significantly
 
-      if (window.hcaptcha && config.public.hcaptchaSiteKey) {
-        // hCaptcha is loaded and we have the site key
-        console.log('🔧 DEBUG: hCaptcha ready, rendering widget (attempt:', attempts + 1, ')');
-        renderHCaptcha();
-      } else if (attempts < maxAttempts) {
-        // Log what's missing for debugging
-        if (!window.hcaptcha) {
-          console.log(
-            '🔧 DEBUG: Waiting for hCaptcha script to load... (attempt:',
-            attempts + 1,
-            ')'
-          );
-        }
-        if (!config.public.hcaptchaSiteKey) {
-          console.log('🔧 DEBUG: Waiting for site key... (attempt:', attempts + 1, ')');
-        }
-        // Keep checking every 200ms until available
-        setTimeout(() => initializeHCaptcha(attempts + 1), 200);
-      } else {
-        console.error('🚨 CRITICAL: Failed to initialize hCaptcha after', maxAttempts, 'attempts');
-        console.log(
-          '🔧 DEBUG: Final state - window.hcaptcha:',
-          !!window.hcaptcha,
-          'siteKey:',
-          !!config.public.hcaptchaSiteKey
-        );
-      }
-    };
+          if (window.hcaptcha && config.public.hcaptchaSiteKey) {
+            // hCaptcha is loaded and we have the site key
+            console.log('🔧 DEBUG: hCaptcha ready, rendering widget (attempt:', attempts + 1, ')');
+            renderHCaptcha();
+          } else if (attempts < maxAttempts) {
+            // Log what's missing for debugging
+            if (!window.hcaptcha) {
+              console.log(
+                '🔧 DEBUG: Waiting for hCaptcha script to load... (attempt:',
+                attempts + 1,
+                ')'
+              );
+            }
+            if (!config.public.hcaptchaSiteKey) {
+              console.log('🔧 DEBUG: Waiting for site key... (attempt:', attempts + 1, ')');
+            }
+            // Keep checking every 300ms until available (longer intervals for initial load)
+            setTimeout(() => initializeHCaptcha(attempts + 1), 300);
+          } else {
+            console.error(
+              '🚨 CRITICAL: Failed to initialize hCaptcha after',
+              maxAttempts,
+              'attempts'
+            );
+            console.log(
+              '🔧 DEBUG: Final state - window.hcaptcha:',
+              !!window.hcaptcha,
+              'siteKey:',
+              !!config.public.hcaptchaSiteKey
+            );
+          }
+        };
 
-    // Start the initialization process
-    initializeHCaptcha();
+        // Start the initialization process
+        initializeHCaptcha();
+      }, 2000); // Wait 2 seconds after mount for full page load and script loading
+    });
   }
 });
 
@@ -121,6 +139,10 @@ const renderHCaptcha = (retryCount = 0) => {
     console.log('🔧 Available config keys:', Object.keys(config.public));
     return;
   }
+
+  // Validate domain configuration
+  const currentDomain = import.meta.client ? window.location.hostname : 'server';
+  console.log('🔧 DEBUG: Attempting to render hCaptcha for domain:', currentDomain);
 
   const hcaptchaElement = document.querySelector('.h-captcha') as HTMLElement;
   if (!hcaptchaElement) {
@@ -204,6 +226,7 @@ const submitError = ref('');
 const hcaptchaToken = ref('');
 const hcaptchaKey = ref(0); // Key to force re-render of hCaptcha
 const hcaptchaWidgetId = ref<string | null>(null); // Track the widget ID
+const hcaptchaFailed = ref(false); // Track if hCaptcha completely failed to load
 
 // Watch for hcaptchaKey changes to re-render widget
 watch(hcaptchaKey, () => {
@@ -283,10 +306,15 @@ const handleSubmit = async () => {
   // Reset error state
   submitError.value = '';
 
-  // Check for hCaptcha token
-  if (!hcaptchaToken.value) {
+  // Check for hCaptcha token (but allow bypass if hCaptcha completely failed)
+  if (!hcaptchaToken.value && !hcaptchaFailed.value) {
     submitError.value = 'Please complete the captcha verification';
     return;
+  }
+
+  // Log if we're bypassing hCaptcha due to failure
+  if (hcaptchaFailed.value) {
+    console.log('🔧 DEBUG: Submitting form without hCaptcha due to initialization failure');
   }
 
   loading.value = true;
