@@ -12,19 +12,28 @@ useSeoMeta({
   ogImage: '/image/contact-image.jpg',
 });
 
-// Load hCaptcha script with better error handling and SSR compatibility
+// Load hCaptcha script with explicit callback for reliable initialization
 useHead({
   script: [
     {
-      src: 'https://js.hcaptcha.com/1/api.js',
+      src: 'https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit',
       async: true,
-      defer: false, // Remove defer to load script earlier
-      onload:
-        'window.hcaptchaLoaded = true; console.log("🔧 DEBUG: hCaptcha script loaded via useHead")',
-      onerror: 'console.error("🚨 Failed to load hCaptcha script from CDN")',
+      defer: false,
     },
   ],
 });
+
+// Global callback function for hCaptcha initialization
+if (import.meta.client) {
+  window.hcaptchaOnLoad = () => {
+    console.log('🔧 DEBUG: hCaptcha loaded via explicit callback');
+    window.hcaptchaLoaded = true;
+    // Trigger any pending initialization
+    if (window.hcaptchaTriggerInit) {
+      window.hcaptchaTriggerInit();
+    }
+  };
+}
 
 // Alternative script loading method for fallback
 if (import.meta.client) {
@@ -206,6 +215,8 @@ declare global {
       render(element: HTMLElement, options: Record<string, unknown>): string;
     };
     hcaptchaLoaded?: boolean;
+    hcaptchaOnLoad?: () => void;
+    hcaptchaTriggerInit?: () => void;
     onHCaptchaVerify?: (token: string) => void;
     onHCaptchaExpire?: () => void;
     onHCaptchaLoaded?: () => void;
@@ -508,17 +519,7 @@ const handleSubmit = async () => {
 
             <!-- hCaptcha Widget -->
             <div class="mb-ceramic-md">
-              <ClientOnly>
-                <div :key="hcaptchaKey" class="h-captcha" style="min-height: 78px" />
-                <template #fallback>
-                  <div
-                    class="border border-gray-300 rounded bg-gray-50 flex items-center justify-center"
-                    style="min-height: 78px"
-                  >
-                    <span class="text-gray-500 text-sm">Loading security check...</span>
-                  </div>
-                </template>
-              </ClientOnly>
+              <div :key="hcaptchaKey" class="h-captcha" style="min-height: 78px" />
             </div>
 
             <!-- Submit Button -->
