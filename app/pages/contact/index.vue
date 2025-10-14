@@ -12,138 +12,8 @@ useSeoMeta({
   ogImage: '/image/contact-image.jpg',
 });
 
-// Load hCaptcha script with explicit callback for reliable initialization
-useHead({
-  script: [
-    {
-      src: 'https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit',
-      async: true,
-      defer: false,
-    },
-  ],
-});
-
-// Global callback function for hCaptcha initialization
-if (import.meta.client) {
-  window.hcaptchaOnLoad = () => {
-    window.hcaptchaLoaded = true;
-  };
-}
-
-// Runtime config for hCaptcha
-const config = useRuntimeConfig();
-
-// Robust hCaptcha initialization with explicit callback
-onMounted(() => {
-  if (import.meta.client) {
-    // Wait for full hydration and DOM to be fully ready
-    nextTick(() => {
-      // Start checking for hCaptcha availability
-      const initializeHCaptcha = (attempts = 0) => {
-        const maxAttempts = 50;
-
-        if (window.hcaptcha && config.public.hcaptchaSiteKey) {
-          // hCaptcha is loaded and we have the site key
-          renderHCaptcha();
-        } else if (attempts < maxAttempts) {
-          // Keep checking every 200ms until available
-          setTimeout(() => initializeHCaptcha(attempts + 1), 200);
-        } else {
-          console.error(
-            '🚨 CRITICAL: Failed to initialize hCaptcha after',
-            maxAttempts,
-            'attempts'
-          );
-        }
-      };
-
-      // Start initialization immediately
-      initializeHCaptcha();
-    });
-  }
-});
-
-// Function to manually render hCaptcha widget
-const renderHCaptcha = (retryCount = 0) => {
-  if (!import.meta.client) return;
-
-  if (!window.hcaptcha) {
-    if (retryCount < 20) {
-      setTimeout(() => {
-        renderHCaptcha(retryCount + 1);
-      }, 200);
-    }
-    return;
-  }
-
-  if (!config.public.hcaptchaSiteKey) {
-    console.error('hCaptcha site key not available');
-    return;
-  }
-
-  const hcaptchaElement = document.querySelector('.h-captcha') as HTMLElement;
-  if (!hcaptchaElement) {
-    if (retryCount < 20) {
-      setTimeout(() => {
-        renderHCaptcha(retryCount + 1);
-      }, 200);
-    }
-    return;
-  }
-
-  // Check if widget is already rendered
-  if (hcaptchaElement.hasChildNodes() && hcaptchaElement.children.length > 0) {
-    return;
-  }
-
-  try {
-    // Clear any existing content
-    hcaptchaElement.innerHTML = '';
-
-    // Render new widget with enhanced error handling
-    const widgetId = window.hcaptcha.render(hcaptchaElement, {
-      sitekey: config.public.hcaptchaSiteKey,
-      callback: (token: string) => {
-        hcaptchaToken.value = token;
-      },
-      'expired-callback': () => {
-        hcaptchaToken.value = '';
-      },
-      'error-callback': (_error: string) => {
-        // Try to reset and re-render on error
-        setTimeout(() => {
-          if (retryCount < 5) {
-            renderHCaptcha(retryCount + 1);
-          }
-        }, 1000);
-      },
-      theme: 'light',
-      size: 'normal',
-    });
-
-    hcaptchaWidgetId.value = widgetId;
-  } catch {
-    // Silent retry on hCaptcha render errors
-    if (retryCount < 10) {
-      setTimeout(() => {
-        renderHCaptcha(retryCount + 1);
-      }, 500);
-    }
-  }
-}; // hCaptcha type declarations
-declare global {
-  interface Window {
-    hcaptcha?: {
-      reset(widgetId?: string): void;
-      render(element: HTMLElement, options: Record<string, unknown>): string;
-    };
-    hcaptchaLoaded?: boolean;
-    hcaptchaOnLoad?: () => void;
-    onHCaptchaVerify?: (token: string) => void;
-    onHCaptchaExpire?: () => void;
-    onHCaptchaLoaded?: () => void;
-  }
-}
+// Use clean hCaptcha composable
+const hcaptcha = useHCaptcha();
 
 // Form state management
 const form = ref({
@@ -156,48 +26,6 @@ const form = ref({
 const loading = ref(false);
 const submitted = ref(false);
 const submitError = ref('');
-const hcaptchaToken = ref('');
-const hcaptchaKey = ref(0); // Key to force re-render of hCaptcha
-const hcaptchaWidgetId = ref<string | null>(null); // Track the widget ID
-
-// Watch for hcaptchaKey changes to re-render widget
-watch(hcaptchaKey, () => {
-  if (import.meta.client) {
-    nextTick(() => {
-      setTimeout(() => {
-        renderHCaptcha(0); // Start with retry count 0
-      }, 100);
-    });
-  }
-});
-
-// Additional safety check - simpler DOM ready detection
-if (import.meta.client) {
-  // Just try to render when the element becomes available
-  const observeHCaptchaElement = () => {
-    const observer = new MutationObserver(() => {
-      const element = document.querySelector('.h-captcha');
-      if (element && window.hcaptcha) {
-        renderHCaptcha(0);
-        observer.disconnect(); // Stop observing once we've found it
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    // Clean up observer after 10 seconds
-    setTimeout(() => {
-      observer.disconnect();
-    }, 10000);
-  };
-
-  onMounted(() => {
-    setTimeout(observeHCaptchaElement, 50);
-  });
-}
 
 // Form validation schema using Zod for Nuxt UI
 const schema = z.object({
@@ -207,39 +35,42 @@ const schema = z.object({
   message: z.string().min(10, 'Message must be at least 10 characters'),
 });
 
-// hCaptcha callback functions (no longer needed with manual rendering)
-
-// Helper function to reset hCaptcha automatically
-const resetHCaptcha = () => {
-  if (import.meta.client) {
+// Initialize hCaptcha widget when component mounts
+onMounted(async () => {
+  if (import.meta.client && hcaptcha.siteKey) {
     try {
-      // Clear the token first
-      hcaptchaToken.value = '';
-
-      // Reset the actual hCaptcha widget if the API is available
-      if (window.hcaptcha && window.hcaptcha.reset && hcaptchaWidgetId.value) {
-        window.hcaptcha.reset(hcaptchaWidgetId.value);
-      }
-
-      // Force complete re-render by incrementing the key
-      // The watch will handle the actual re-rendering
-      hcaptchaKey.value += 1;
-      hcaptchaWidgetId.value = null;
-
-      return true;
-    } catch {
-      // Silent reset handling
-      return false;
+      await hcaptcha.render('h-captcha-container', {
+        sitekey: hcaptcha.siteKey,
+        theme: 'light',
+        size: 'normal',
+      });
+    } catch (error) {
+      console.error('Failed to render hCaptcha:', error);
     }
   }
-  return false;
-}; // Submit handler
+});
+
+// Submit handler with proper validation
 const handleSubmit = async () => {
   // Reset error state
   submitError.value = '';
 
-  // Check for hCaptcha token
-  if (!hcaptchaToken.value) {
+  // 1. FIRST: Validate form data using Zod schema
+  try {
+    schema.parse(form.value);
+  } catch (validationError) {
+    if (validationError instanceof z.ZodError) {
+      // Extract first validation error message
+      const firstError = validationError.errors[0];
+      submitError.value = firstError.message;
+      return;
+    }
+    submitError.value = 'Please check your form data';
+    return;
+  }
+
+  // 2. SECOND: Check for hCaptcha token
+  if (!hcaptcha.token.value) {
     submitError.value = 'Please complete the captcha verification';
     return;
   }
@@ -254,18 +85,16 @@ const handleSubmit = async () => {
         lastName: form.value.lastName,
         email: form.value.email,
         message: form.value.message,
-        hcaptchaToken: hcaptchaToken.value,
+        hcaptchaToken: hcaptcha.token.value,
       },
     });
 
     submitted.value = true;
 
-    // Reset hCaptcha after a short delay to ensure submission is processed
-    setTimeout(() => {
-      resetHCaptcha();
-    }, 500);
+    // Reset hCaptcha after successful submission
+    hcaptcha.reset();
 
-    // Reset form after successful submission
+    // Reset form after 5 seconds
     setTimeout(() => {
       form.value = {
         firstName: '',
@@ -274,13 +103,11 @@ const handleSubmit = async () => {
         message: '',
       };
       submitted.value = false;
-
-      // Ensure hCaptcha is ready for next submission
-      resetHCaptcha();
+      hcaptcha.reset();
     }, 5000);
   } catch (error: unknown) {
     // Reset hCaptcha on error so user can try again
-    resetHCaptcha();
+    hcaptcha.reset();
 
     if (error && typeof error === 'object' && 'data' in error) {
       const errorData = error.data as { statusMessage?: string };
@@ -435,7 +262,7 @@ const handleSubmit = async () => {
 
             <!-- hCaptcha Widget -->
             <div class="mb-ceramic-md">
-              <div :key="hcaptchaKey" class="h-captcha" style="min-height: 78px" />
+              <div id="h-captcha-container" style="min-height: 78px" />
             </div>
 
             <!-- Submit Button -->
