@@ -1,0 +1,189 @@
+name: CI/CD Pipeline for Ju Keramia
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Note: Linting is handled by separate lint.yaml workflow
+  # This CI focuses on build, type-check, security, and ceramic-specific validations
+
+  # TypeScript Type Checking
+  type-check:
+    runs-on: ubuntu-latest
+    name: 🔧 TypeScript Type Checking
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📋 Install Dependencies
+        run: npm ci
+
+      - name: 🔧 TypeScript Check
+        run: npx nuxt typecheck
+
+      - name: 📊 Report Type Safety
+        run: echo "✅ TypeScript type checking passed!"
+
+  # Build Test
+  build:
+    runs-on: ubuntu-latest
+    name: 🏗️ Build Application
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📋 Install Dependencies
+        run: npm ci
+
+      - name: 🏗️ Build Application
+        run: npm run build
+        env:
+          # Provide test environment variables for build
+          NUXT_RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || 'test_key' }}
+          NUXT_PUBLIC_HCAPTCHA_SITE_KEY: ${{ secrets.HCAPTCHA_SITE_KEY || 'test_site_key' }}
+          NUXT_HCAPTCHA_SECRET_KEY: ${{ secrets.HCAPTCHA_SECRET_KEY || 'test_secret_key' }}
+
+      - name: 📊 Build Report
+        run: echo "✅ Application built successfully!"
+
+  # Security Audit
+  security-audit:
+    runs-on: ubuntu-latest
+    name: 🔒 Security Audit
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📋 Install Dependencies
+        run: npm ci
+
+      - name: 🔒 Run Security Audit
+        run: npm audit --audit-level=moderate
+
+      - name: 📊 Security Report
+        run: echo "✅ Security audit completed!"
+
+  # Ceramic Design System Validation
+  design-system-check:
+    runs-on: ubuntu-latest
+    name: 🎨 Ceramic Design System Validation
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📋 Install Dependencies
+        run: npm ci
+
+      - name: 🎨 Validate Ceramic Design Tokens
+        run: |
+          echo "🔍 Checking ceramic design system consistency..."
+          
+          # Check if ceramic CSS variables are properly defined
+          if grep -q "color-clay-" app/assets/css/main.css; then
+            echo "✅ Clay color tokens found"
+          else
+            echo "❌ Clay color tokens missing" && exit 1
+          fi
+          
+          if grep -q "color-sage-" app/assets/css/main.css; then
+            echo "✅ Sage color tokens found"
+          else
+            echo "❌ Sage color tokens missing" && exit 1
+          fi
+          
+          if grep -q "spacing-ceramic-" app/assets/css/main.css; then
+            echo "✅ Ceramic spacing tokens found"
+          else
+            echo "❌ Ceramic spacing tokens missing" && exit 1
+          fi
+          
+          echo "✅ Ceramic design system validation passed!"
+
+  # Contact Form Validation Test
+  contact-form-test:
+    runs-on: ubuntu-latest
+    name: 📧 Contact Form Validation
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📋 Install Dependencies
+        run: npm ci
+
+      - name: 📧 Validate Contact Form Security
+        run: |
+          echo "🔍 Checking contact form security implementation..."
+          
+          # Check if form validation is implemented
+          if grep -q "schema.parse(form.value)" app/pages/contact/index.vue; then
+            echo "✅ Form validation implementation found"
+          else
+            echo "❌ Form validation missing - security risk!" && exit 1
+          fi
+          
+          # Check if hCaptcha integration exists
+          if grep -q "hcaptcha.token.value" app/pages/contact/index.vue; then
+            echo "✅ hCaptcha integration found"
+          else
+            echo "❌ hCaptcha integration missing" && exit 1
+          fi
+          
+          echo "✅ Contact form security validation passed!"
+
+  # Final Status Check
+  all-checks-passed:
+    runs-on: ubuntu-latest
+    name: ✅ All Quality Checks
+    needs: [type-check, build, security-audit, design-system-check, contact-form-test]
+    
+    steps:
+      - name: 🎉 Success Report
+        run: |
+          echo "🏺 ====================================="
+          echo "🎉 All Ju Keramia quality checks passed!"
+          echo "ℹ️  Code linting handled by lint.yaml"
+          echo "✅ TypeScript type safety"
+          echo "✅ Application build"
+          echo "✅ Security audit"
+          echo "✅ Ceramic design system"
+          echo "✅ Contact form security"
+          echo "🏺 Ready for ceramic perfection! ✨"
+          echo "====================================="
