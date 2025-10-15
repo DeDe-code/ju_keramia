@@ -2,9 +2,9 @@ name: CI/CD Pipeline for Ju Keramia
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   # Note: Linting is handled by separate lint.yaml workflow
@@ -14,7 +14,7 @@ jobs:
   type-check:
     runs-on: ubuntu-latest
     name: 🔧 TypeScript Type Checking
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: 🏗️ Build Application
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -67,7 +67,7 @@ jobs:
   security-audit:
     runs-on: ubuntu-latest
     name: 🔒 Security Audit
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
   design-system-check:
     runs-on: ubuntu-latest
     name: 🎨 Ceramic Design System Validation
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -108,33 +108,33 @@ jobs:
       - name: 🎨 Validate Ceramic Design Tokens
         run: |
           echo "🔍 Checking ceramic design system consistency..."
-          
+
           # Check if ceramic CSS variables are properly defined
           if grep -q "color-clay-" app/assets/css/main.css; then
             echo "✅ Clay color tokens found"
           else
             echo "❌ Clay color tokens missing" && exit 1
           fi
-          
+
           if grep -q "color-sage-" app/assets/css/main.css; then
             echo "✅ Sage color tokens found"
           else
             echo "❌ Sage color tokens missing" && exit 1
           fi
-          
+
           if grep -q "spacing-ceramic-" app/assets/css/main.css; then
             echo "✅ Ceramic spacing tokens found"
           else
             echo "❌ Ceramic spacing tokens missing" && exit 1
           fi
-          
+
           echo "✅ Ceramic design system validation passed!"
 
   # Contact Form Validation Test
   contact-form-test:
     runs-on: ubuntu-latest
     name: 📧 Contact Form Validation
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -151,21 +151,21 @@ jobs:
       - name: 📧 Validate Contact Form Security
         run: |
           echo "🔍 Checking contact form security implementation..."
-          
+
           # Check if form validation is implemented
           if grep -q "schema.parse(form.value)" app/pages/contact/index.vue; then
             echo "✅ Form validation implementation found"
           else
             echo "❌ Form validation missing - security risk!" && exit 1
           fi
-          
+
           # Check if hCaptcha integration exists
           if grep -q "hcaptcha.token.value" app/pages/contact/index.vue; then
             echo "✅ hCaptcha integration found"
           else
             echo "❌ hCaptcha integration missing" && exit 1
           fi
-          
+
           echo "✅ Contact form security validation passed!"
 
   # Final Status Check
@@ -173,7 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     name: ✅ All Quality Checks
     needs: [type-check, build, security-audit, design-system-check, contact-form-test]
-    
+
     steps:
       - name: 🎉 Success Report
         run: |
