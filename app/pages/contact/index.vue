@@ -61,8 +61,8 @@ const handleSubmit = async () => {
   } catch (validationError) {
     if (validationError instanceof z.ZodError) {
       // Extract first validation error message
-      const firstError = validationError.errors[0];
-      submitError.value = firstError.message;
+     const firstError = validationError.errors[0];
+submitError.value = firstError?.message ?? 'Validation error';
       return;
     }
     submitError.value = 'Please check your form data';
