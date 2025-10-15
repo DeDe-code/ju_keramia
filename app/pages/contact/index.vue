@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod';
+import useCaptcha from '../../../composables/useCaptcha';
 
 // SEO and meta configuration
 useSeoMeta({
@@ -13,7 +14,7 @@ useSeoMeta({
 });
 
 // Use clean hCaptcha composable
-const hcaptcha = useHCaptcha();
+const hcaptcha = useCaptcha();
 
 // Form state management
 const form = ref({
@@ -61,8 +62,8 @@ const handleSubmit = async () => {
   } catch (validationError) {
     if (validationError instanceof z.ZodError) {
       // Extract first validation error message
-     const firstError = validationError.errors[0];
-submitError.value = firstError?.message ?? 'Validation error';
+      const firstError = validationError.errors[0];
+      submitError.value = firstError?.message ?? 'Validation error';
       return;
     }
     submitError.value = 'Please check your form data';

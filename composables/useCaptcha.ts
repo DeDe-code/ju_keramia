@@ -38,7 +38,7 @@ declare global {
   }
 }
 
-export const useHCaptcha = () => {
+export default function useCaptcha() {
   const config = useRuntimeConfig();
   const token = ref<string>('');
   const widgetId = ref<string | null>(null);
@@ -162,4 +162,4 @@ export const useHCaptcha = () => {
     // Config
     siteKey: config.public.hcaptchaSiteKey,
   };
-};
+}
