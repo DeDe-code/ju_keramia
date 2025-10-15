@@ -173,6 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     name: ✅ All Quality Checks
     needs: [type-check, build, security-audit, design-system-check, contact-form-test]
+    if: always()
 
     steps:
       - name: 🎉 Success Report
