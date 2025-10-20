@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import useContactFormValidation from '../../../composables/useContactFormValidation';
+
 // SEO and meta configuration
 useSeoMeta({
   title: 'Contact | Ju Keramia - Get in Touch',
@@ -10,141 +12,13 @@ useSeoMeta({
   ogImage: '/image/contact-image.jpg',
 });
 
-// Runtime config for hCaptcha
-const config = useRuntimeConfig();
+// Use contact form validation composable
+const { form, loading, submitted, submitError, schema, handleSubmit, initializeCaptcha } =
+  useContactFormValidation();
 
-// Debug log for development
-if (import.meta.dev) {
-  console.log('hCaptcha Site Key:', config.public.hcaptchaSiteKey);
-}
-
-// hCaptcha type declarations
-declare global {
-  interface Window {
-    hcaptcha?: {
-      reset(): void;
-      render(element: HTMLElement, options: Record<string, unknown>): void;
-    };
-    onHCaptchaVerify?: (token: string) => void;
-    onHCaptchaExpire?: () => void;
-  }
-}
-
-// Form state management
-const form = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
-  message: '',
-});
-
-const loading = ref(false);
-const submitted = ref(false);
-const submitError = ref('');
-const hcaptchaToken = ref('');
-
-// Form validation schema
-const schema = {
-  firstName: (value: string) => value?.length >= 2 || 'First name must be at least 2 characters',
-  lastName: (value: string) => value?.length >= 2 || 'Last name must be at least 2 characters',
-  email: (value: string) => {
-    if (!value) return 'Email is required';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(value) || 'Please enter a valid email address';
-  },
-  message: (value: string) => value?.length >= 10 || 'Message must be at least 10 characters',
-};
-
-// hCaptcha callback functions (accessed globally)
-if (import.meta.client) {
-  window.onHCaptchaVerify = (token: string) => {
-    hcaptchaToken.value = token;
-  };
-
-  window.onHCaptchaExpire = () => {
-    hcaptchaToken.value = '';
-  };
-}
-
-// Submit handler
-const handleSubmit = async () => {
-  // Reset error state
-  submitError.value = '';
-
-  // Check for hCaptcha token
-  if (!hcaptchaToken.value) {
-    submitError.value = 'Please complete the captcha verification';
-    return;
-  }
-
-  loading.value = true;
-
-  try {
-    const response = await $fetch('/api/contact', {
-      method: 'POST',
-      body: {
-        firstName: form.value.firstName,
-        lastName: form.value.lastName,
-        email: form.value.email,
-        message: form.value.message,
-        hcaptchaToken: hcaptchaToken.value,
-      },
-    });
-
-    console.log('Form submitted successfully:', response);
-    submitted.value = true;
-
-    // Reset form after successful submission
-    setTimeout(() => {
-      form.value = {
-        firstName: '',
-        lastName: '',
-        email: '',
-        message: '',
-      };
-      hcaptchaToken.value = '';
-      submitted.value = false;
-
-      // Reset hCaptcha widget if available
-      if (import.meta.client && window.hcaptcha) {
-        window.hcaptcha.reset();
-      }
-    }, 5000);
-  } catch (error: unknown) {
-    console.error('Error submitting form:', error);
-
-    if (error && typeof error === 'object' && 'data' in error) {
-      const errorData = error.data as { statusMessage?: string };
-      if (errorData?.statusMessage) {
-        submitError.value = errorData.statusMessage;
-      } else {
-        submitError.value = 'Something went wrong. Please try again later.';
-      }
-    } else if (error instanceof Error) {
-      submitError.value = error.message;
-    } else {
-      submitError.value = 'Something went wrong. Please try again later.';
-    }
-
-    // Reset hCaptcha on error
-    hcaptchaToken.value = '';
-    if (import.meta.client && window.hcaptcha) {
-      window.hcaptcha.reset();
-    }
-  } finally {
-    loading.value = false;
-  }
-};
-
-// Load hCaptcha script
-useHead({
-  script: [
-    {
-      src: 'https://js.hcaptcha.com/1/api.js',
-      async: true,
-      defer: true,
-    },
-  ],
+// Initialize hCaptcha widget when component mounts
+onMounted(async () => {
+  await initializeCaptcha();
 });
 </script>
 
@@ -185,8 +59,8 @@ useHead({
 
           <!-- Error Message -->
           <div
-            v-if="submitError"
-            class="bg-red-50 border border-red-200 rounded-ceramic-md p-ceramic-md mb-ceramic-md"
+            v-if="submitError && !submitted"
+            class="bg-red-50 border border-red-200 rounded-ceramic-md p-ceramic-md mb-ceramic-md all-fields-error"
           >
             <div class="flex items-center gap-ceramic-xs">
               <UIcon
@@ -212,46 +86,34 @@ useHead({
 
           <!-- Contact Form -->
           <UForm v-if="!submitted" :schema="schema" :state="form" @submit="handleSubmit">
-            <!-- Name Fields -->
-            <div class="flex flex-col w-full md:gap-ceramic-md mb-ceramic-md">
-              <!-- First Name -->
-              <div class="space-y-ceramic-xs">
-                <label class="block text-stone-700 font-medium text-ceramic-sm">
-                  First Name <span class="text-clay-600">*</span>
-                </label>
-                <UInput
-                  v-model="form.firstName"
-                  name="firstName"
-                  placeholder="First Name"
-                  size="lg"
-                  color="neutral"
-                  variant="outline"
-                  class="w-full bg-cream-50"
-                />
-              </div>
+            <!-- First Name Field -->
+            <UFormField name="firstName" label="First Name" required>
+              <UInput
+                v-model="form.firstName"
+                name="firstName"
+                placeholder="First Name"
+                size="lg"
+                color="neutral"
+                variant="outline"
+                class="w-full"
+              />
+            </UFormField>
 
-              <!-- Last Name -->
-              <div class="space-y-ceramic-xs">
-                <label class="block text-stone-700 font-medium text-ceramic-sm">
-                  Last Name <span class="text-clay-600">*</span>
-                </label>
-                <UInput
-                  v-model="form.lastName"
-                  name="lastName"
-                  placeholder="Last Name"
-                  size="lg"
-                  color="neutral"
-                  variant="outline"
-                  class="w-full bg-cream-50"
-                />
-              </div>
-            </div>
+            <!-- Last Name Field -->
+            <UFormField name="lastName" label="Last Name" required>
+              <UInput
+                v-model="form.lastName"
+                name="lastName"
+                placeholder="Last Name"
+                size="lg"
+                color="neutral"
+                variant="outline"
+                class="w-full"
+              />
+            </UFormField>
 
             <!-- Email Field -->
-            <div class="w-full space-y-ceramic-xs mb-ceramic-md">
-              <label class="block text-stone-700 font-medium text-ceramic-sm">
-                Email <span class="text-clay-600">*</span>
-              </label>
+            <UFormField name="email" label="Email" required>
               <UInput
                 v-model="form.email"
                 name="email"
@@ -260,15 +122,12 @@ useHead({
                 size="lg"
                 color="neutral"
                 variant="outline"
-                class="w-full bg-cream-50"
+                class="w-full"
               />
-            </div>
+            </UFormField>
 
             <!-- Message Field -->
-            <div class="w-full space-y-ceramic-xs mb-ceramic-md">
-              <label class="block text-stone-700 font-medium text-ceramic-sm">
-                Message <span class="text-clay-600">*</span>
-              </label>
+            <UFormField name="message" label="Message" required>
               <UTextarea
                 v-model="form.message"
                 name="message"
@@ -276,20 +135,14 @@ useHead({
                 :rows="6"
                 size="lg"
                 color="neutral"
-                class="w-full bg-cream-50"
+                class="w-full"
                 autoresize
               />
-            </div>
+            </UFormField>
 
             <!-- hCaptcha Widget -->
             <div class="mb-ceramic-md">
-              <div
-                class="h-captcha"
-                :data-sitekey="config.public.hcaptchaSiteKey"
-                data-callback="onHCaptchaVerify"
-                data-expired-callback="onHCaptchaExpire"
-                data-theme="light"
-              />
+              <div id="h-captcha-container" class="min-h-[78px]" />
             </div>
 
             <!-- Submit Button -->

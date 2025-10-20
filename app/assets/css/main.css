@@ -4,8 +4,10 @@
 /* Custom Ceramic Design System */
 
 @theme {
-  /* Cream & Light Neutrals */
   --color-*: initial;
+  /* Ceramic Error Red - for error states */
+  --color-ceramic-error: #b85c4c;
+  /* Cream & Light Neutrals */
   --color-cream-25: #ddd5d0;
   --color-cream-50: #fafafa;
   --color-cream-100: #dcd5d1;
