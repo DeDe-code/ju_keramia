@@ -1,6 +1,4 @@
 import { Resend } from 'resend';
-
-// Type definitions
 interface ContactFormData {
   firstName: string;
   lastName: string;

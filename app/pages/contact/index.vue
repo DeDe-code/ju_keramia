@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import useContactFormValidation from '../../../composables/useContactFormValidation';
+import useContactFormValidation from '~~/composables/useContactFormValidation';
 
 // SEO and meta configuration
 useSeoMeta({

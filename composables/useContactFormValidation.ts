@@ -1,6 +1,6 @@
 import { ref, readonly, nextTick } from 'vue';
 import useCaptcha from './useCaptcha';
-import { contactFormSchema, type ContactFormSchema } from '../shared/contactFormSchema';
+import { contactFormSchema, type ContactFormSchema } from '~~/shared/contactFormSchema';
 /**
  * Contact Form Validation Composable
  *
