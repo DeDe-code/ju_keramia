@@ -129,11 +129,18 @@ export default defineAppConfig({
         size: 'md',
       },
     },
+    // Form Components
+    formField: {
+      slots: {
+        root: 'my-ceramic-sm',
+        error: '!text-ceramic-error font-ceramic-sans text-ceramic-sm mt-ceramic-xs',
+      },
+    },
 
     // Input components with ceramic styling
     input: {
       slots: {
-        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none focus:ring-0 focus-visible:ring-0',
+        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] !bg-cream-50 border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none ',
       },
       variants: {
         size: {
@@ -151,12 +158,15 @@ export default defineAppConfig({
           },
         },
       },
+      color: {
+        error: 'border-ceramic-error focus:ring-ceramic-error',
+      },
     },
 
     // Textarea components with ceramic styling
     textarea: {
       slots: {
-        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none focus:ring-0 focus-visible:ring-0',
+        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] !bg-cream-50 border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none focus:ring-0 focus-visible:ring-0',
       },
       variants: {
         size: {

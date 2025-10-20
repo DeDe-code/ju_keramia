@@ -86,6 +86,16 @@ export default function useCaptcha() {
         }
 
         try {
+          // Check if container exists and clear it first
+          const container = document.getElementById(containerId);
+          if (!container) {
+            reject(new Error(`Container with id "${containerId}" not found`));
+            return;
+          }
+
+          // Clear the container before rendering new widget
+          container.innerHTML = '';
+
           const id = window.hcaptcha.render(containerId, {
             sitekey: hcaptchaConfig.sitekey,
             theme: hcaptchaConfig.theme || 'light',
