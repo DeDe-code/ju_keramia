@@ -24,6 +24,7 @@
     "@nuxthq/ui": "^2.7.0",
     "@nuxtjs/google-fonts": "^3.2.0",
     "@pinia/nuxt": "^0.11.2",
+    "@supabase/supabase-js": "^2.76.1",
     "nuxt": "^4.1.2",
     "pinia": "^3.0.3",
     "resend": "^6.1.2",

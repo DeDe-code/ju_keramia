@@ -15,6 +15,9 @@ export default defineNuxtConfig({
     // Public keys (exposed to client-side)
     public: {
       hcaptchaSiteKey: process.env.NUXT_PUBLIC_HCAPTCHA_SITE_KEY,
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
     },
   },
 
