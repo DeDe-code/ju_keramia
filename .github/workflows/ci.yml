@@ -152,18 +152,30 @@ jobs:
         run: |
           echo "🔍 Checking contact form security implementation..."
 
-          # Check if form validation is implemented
-          if grep -q "schema.parse(form.value)" app/pages/contact/index.vue; then
+          # Check if form validation is implemented (supports both manual and Nuxt UI patterns)
+          if grep -q ":schema=\"schema\"" app/pages/contact/index.vue || grep -q "schema.parse(form.value)" app/pages/contact/index.vue; then
             echo "✅ Form validation implementation found"
           else
             echo "❌ Form validation missing - security risk!" && exit 1
           fi
 
+          # Check if validation schema is imported
+          if grep -q "contactFormSchema" app/pages/contact/index.vue || grep -q "from '.*contactFormSchema'" app/pages/contact/index.vue; then
+            echo "✅ Validation schema imported"
+          else
+            echo "❌ Validation schema not imported" && exit 1
+          fi
+
           # Check if hCaptcha integration exists
-          if grep -q "hcaptcha.token.value" app/pages/contact/index.vue; then
+          if grep -q "initializeCaptcha\|useCaptcha\|h-captcha-container" app/pages/contact/index.vue; then
             echo "✅ hCaptcha integration found"
           else
             echo "❌ hCaptcha integration missing" && exit 1
+          fi
+
+          # Check if form composable is used (recommended pattern)
+          if grep -q "useContactFormValidation" app/pages/contact/index.vue; then
+            echo "✅ Form validation composable found"
           fi
 
           echo "✅ Contact form security validation passed!"
