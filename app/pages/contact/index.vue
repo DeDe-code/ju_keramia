@@ -153,7 +153,7 @@ onMounted(async () => {
                 color="neutral"
                 :loading="loading"
                 :disabled="loading"
-                class="w-full md:w-[20rem] px-ceramic-lg py-ceramic-sm bg-clay-700 hover:bg-stone-700 text-cream-25 rounded-none"
+                class="w-full md:w-[20rem] mx-auto px-ceramic-lg py-ceramic-sm bg-clay-700 hover:bg-stone-700 text-cream-25 rounded-none"
               >
                 <template v-if="loading">
                   <UIcon

@@ -133,14 +133,14 @@ export default defineAppConfig({
     formField: {
       slots: {
         root: 'my-ceramic-sm',
-        error: '!text-ceramic-error font-ceramic-sans text-ceramic-sm mt-ceramic-xs',
+        error: '!text-ceramic-error font-ceramic-sans text-ceramic-sm mt-0 ml-ceramic-sm',
       },
     },
 
     // Input components with ceramic styling
     input: {
       slots: {
-        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] !bg-cream-50 border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none ',
+        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] !bg-cream-50 border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none',
       },
       variants: {
         size: {
