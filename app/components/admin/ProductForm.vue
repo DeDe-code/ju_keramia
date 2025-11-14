@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useImageUpload } from '~~/composables/useImageUpload';
+import type { ProductFormData } from '~~/types/admin';
 
 /**
  * ProductForm Component
@@ -15,26 +16,8 @@ import { useImageUpload } from '~~/composables/useImageUpload';
  * - Featured flag
  */
 
-interface Product {
-  id?: string;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-  dimensions: {
-    height: number;
-    width: number;
-    depth: number;
-  };
-  materials: string[];
-  in_stock: boolean;
-  featured: boolean;
-}
-
 interface Props {
-  product?: Product;
+  product?: ProductFormData;
   mode?: 'create' | 'edit';
 }
 
@@ -44,7 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  submit: [product: Product];
+  submit: [product: ProductFormData];
   cancel: [];
 }>();
 
@@ -55,7 +38,7 @@ const toast = useToast();
 const { uploadImage } = useImageUpload();
 
 // Form state
-const form = ref<Product>({
+const form = ref<ProductFormData>({
   name: props.product?.name || '',
   slug: props.product?.slug || '',
   description: props.product?.description || '',
@@ -479,10 +462,11 @@ const hasAtLeastOneImage = computed(() => {
           class="grid grid-cols-1 md:grid-cols-3 gap-ceramic-md mt-ceramic-md"
         >
           <div v-for="(previewUrl, index) in imagePreviewUrls" :key="index" class="relative group">
-            <img
+            <NuxtImg
               :src="previewUrl"
               :alt="`Preview ${index + 1}`"
               class="w-full h-48 object-cover rounded-ceramic-md border-2 border-stone-200"
+              loading="lazy"
             />
             <div class="absolute top-2 right-2">
               <UButton
@@ -507,10 +491,11 @@ const hasAtLeastOneImage = computed(() => {
           <p class="text-ceramic-sm font-medium text-clay-700 mb-ceramic-sm">Current Images</p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-ceramic-md">
             <div v-for="(imageUrl, index) in form.images" :key="index" class="relative">
-              <img
+              <NuxtImg
                 :src="imageUrl"
                 :alt="`Current ${index + 1}`"
                 class="w-full h-48 object-cover rounded-ceramic-md border-2 border-stone-300"
+                loading="lazy"
               />
               <div
                 class="absolute bottom-2 left-2 bg-sage-700/80 text-cream-25 px-2 py-1 rounded text-ceramic-xs"

@@ -149,13 +149,10 @@ const handleUpload = async () => {
   validationError.value = null;
 
   try {
-    const result = await uploadImage(
-      selectedFile.value,
-      props.imageType,
-      props.subType,
-      props.requiredWidth,
-      props.requiredHeight
-    );
+    const result = await uploadImage(selectedFile.value, props.imageType, props.subType || '', {
+      maxWidth: props.requiredWidth,
+      maxHeight: props.requiredHeight,
+    });
 
     emit('uploadSuccess', result);
 
@@ -222,7 +219,13 @@ const clearSelection = () => {
     <div v-else class="space-y-ceramic-sm">
       <!-- Image Preview -->
       <div class="relative rounded-ceramic-md overflow-hidden bg-stone-100 border border-stone-300">
-        <img :src="previewUrl" alt="Preview" class="w-full h-64 object-cover" />
+        <NuxtImg
+          :src="previewUrl"
+          alt="Preview"
+          class="w-full h-64 object-cover"
+          format="webp"
+          loading="lazy"
+        />
 
         <!-- Remove button (only if not uploaded yet) -->
         <button

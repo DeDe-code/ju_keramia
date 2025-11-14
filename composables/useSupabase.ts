@@ -1,7 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../types/supabase';
 
-// Singleton instance
-let supabaseClient: ReturnType<typeof createClient> | null = null;
+// Singleton instance with proper typing
+let supabaseClient: SupabaseClient<Database> | null = null;
 
 export const useSupabase = () => {
   // Return existing client if already created
@@ -17,7 +18,7 @@ export const useSupabase = () => {
     throw new Error('Supabase URL and anon key must be set in environment variables');
   }
 
-  // Create and cache the client
-  supabaseClient = createClient(supabaseUrl, supabaseKey);
+  // Create and cache the typed client
+  supabaseClient = createClient<Database>(supabaseUrl, supabaseKey);
   return supabaseClient;
 };

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useSupabase } from '~~/composables/useSupabase';
+import type { ProductRow, ProductFormData } from '~~/types/admin';
+import { productRowToFormData } from '~~/types/admin';
 
 /**
  * AdminDashboardContent Component
@@ -12,29 +14,11 @@ import { useSupabase } from '~~/composables/useSupabase';
 
 type TabName = 'hero-images' | 'products';
 
-interface Product {
-  id?: string;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-  dimensions: {
-    height: number;
-    width: number;
-    depth: number;
-  };
-  materials: string[];
-  in_stock: boolean;
-  featured: boolean;
-}
-
 // State
 const activeTab = ref<TabName>('hero-images');
 const showProductForm = ref(false);
-const editingProduct = ref<Product | undefined>(undefined);
-const products = ref<Product[]>([]);
+const editingProduct = ref<ProductFormData | undefined>(undefined);
+const products = ref<ProductRow[]>([]);
 const loading = ref(false);
 
 // Toast
@@ -103,15 +87,16 @@ const handleCreateProduct = () => {
 /**
  * Show edit product form
  */
-const handleEditProduct = (product: Product) => {
-  editingProduct.value = product;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleEditProduct = (product: any) => {
+  editingProduct.value = productRowToFormData(product as ProductRow);
   showProductForm.value = true;
 };
 
 /**
  * Handle product form submission
  */
-const handleProductSubmit = async (product: Product) => {
+const handleProductSubmit = async (product: ProductFormData) => {
   try {
     const supabase = useSupabase();
 
@@ -120,7 +105,16 @@ const handleProductSubmit = async (product: Product) => {
       const { error } = await supabase
         .from('products')
         .update({
-          ...product,
+          name: product.name,
+          slug: product.slug,
+          description: product.description,
+          price: product.price,
+          images: product.images,
+          category: product.category,
+          dimensions: product.dimensions,
+          materials: product.materials,
+          in_stock: product.in_stock,
+          featured: product.featured,
           updated_at: new Date().toISOString(),
         })
         .eq('id', editingProduct.value.id);
@@ -134,7 +128,20 @@ const handleProductSubmit = async (product: Product) => {
       });
     } else {
       // Create new product
-      const { error } = await supabase.from('products').insert([product]);
+      const { error } = await supabase.from('products').insert([
+        {
+          name: product.name,
+          slug: product.slug,
+          description: product.description,
+          price: product.price,
+          images: product.images,
+          category: product.category,
+          dimensions: product.dimensions,
+          materials: product.materials,
+          in_stock: product.in_stock,
+          featured: product.featured,
+        },
+      ]);
 
       if (error) throw error;
 
@@ -312,11 +319,13 @@ watch(activeTab, (newTab) => {
             >
               <!-- Product Image -->
               <div class="aspect-square bg-stone-100 relative">
-                <img
-                  v-if="product.images[0]"
+                <NuxtImg
+                  v-if="product.images?.[0]"
                   :src="product.images[0]"
                   :alt="product.name"
                   class="w-full h-full object-cover"
+                  format="webp"
+                  loading="lazy"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center">
                   <UIcon name="i-heroicons-photo" class="!text-ceramic-4xl text-stone-300" />
@@ -354,11 +363,11 @@ watch(activeTab, (newTab) => {
                 </p>
 
                 <!-- Actions -->
-                <div class="flex gap-ceramic-xs">
+                <div class="flex flex-col gap-ceramic-xs">
                   <UButton
                     size="sm"
                     variant="outline"
-                    class="flex-1 border-stone-300 text-clay-700 hover:bg-stone-100"
+                    class="w-full md:w-[20rem] mx-auto px-ceramic-lg py-ceramic-sm bg-clay-700 hover:bg-stone-700 text-cream-25 rounded-none"
                     @click="handleEditProduct(product)"
                   >
                     <UIcon name="i-heroicons-pencil" class="!text-ceramic-base mr-ceramic-xs" />
@@ -367,7 +376,7 @@ watch(activeTab, (newTab) => {
                   <UButton
                     size="sm"
                     variant="outline"
-                    class="border-red-300 text-red-600 hover:bg-red-50"
+                    class="w-full md:w-[20rem] mx-auto px-ceramic-lg py-ceramic-sm bg-clay-700 bg-ceramic-error text-cream-25 rounded-none"
                     @click="handleDeleteProduct(product.id!)"
                   >
                     <UIcon name="i-heroicons-trash" class="!text-ceramic-base" />

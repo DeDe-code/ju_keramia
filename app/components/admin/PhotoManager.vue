@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useSupabase } from '~~/composables/useSupabase';
+import type { Database } from '~~/types/supabase';
 
 /**
  * PhotoManager Component
@@ -11,18 +12,7 @@ import { useSupabase } from '~~/composables/useSupabase';
  * - Shows image metadata
  */
 
-interface HeroImage {
-  id: string;
-  page_type: 'landing' | 'about';
-  image_url: string;
-  cloudflare_key: string;
-  alt_text: string;
-  width: number;
-  height: number;
-  file_size: number;
-  created_at: string;
-  updated_at: string;
-}
+type HeroImage = Database['public']['Tables']['hero_images']['Row'];
 
 // State
 const landingImage = ref<HeroImage | null>(null);
@@ -52,8 +42,8 @@ const fetchHeroImages = async () => {
     if (fetchError) throw fetchError;
 
     if (data) {
-      landingImage.value = data.find((img: HeroImage) => img.page_type === 'landing') || null;
-      aboutImage.value = data.find((img: HeroImage) => img.page_type === 'about') || null;
+      landingImage.value = data.find((img) => img.page_type === 'landing') || null;
+      aboutImage.value = data.find((img) => img.page_type === 'about') || null;
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load hero images';
@@ -113,7 +103,8 @@ const formatFileSize = (bytes: number): string => {
 /**
  * Format date for display
  */
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
