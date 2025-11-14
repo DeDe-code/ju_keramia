@@ -12,12 +12,18 @@ export default defineNuxtConfig({
     hcaptchaSecretKey: process.env.NUXT_HCAPTCHA_SECRET_KEY,
     resendToEmail: process.env.NUXT_RESEND_TO_EMAIL || 'hello@jukeramia.com',
     resendFromEmail: process.env.NUXT_RESEND_FROM_EMAIL || 'contact@jukeramia.com',
+    //CLOUDFLARE CREDENTIALS:
+    cloudflareAccountId: process.env.NUXT_CLOUDFLARE_ACCOUNT_ID,
+    cloudflareAccessKeyId: process.env.NUXT_CLOUDFLARE_ACCESS_KEY_ID,
+    cloudflareSecretAccessKey: process.env.NUXT_CLOUDFLARE_SECRET_ACCESS_KEY,
+    cloudflareBucketName: process.env.NUXT_CLOUDFLARE_BUCKET_NAME,
     // Public keys (exposed to client-side)
     public: {
       hcaptchaSiteKey: process.env.NUXT_PUBLIC_HCAPTCHA_SITE_KEY,
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
+      cloudflarePublicUrl: process.env.NUXT_PUBLIC_CLOUDFLARE_PUBLIC_URL,
     },
   },
 
@@ -57,7 +63,7 @@ export default defineNuxtConfig({
     // Enable local image optimization
     provider: 'ipx',
     // Configure domains for external images (if needed)
-    domains: [],
+    domains: ['cdn.jukeramia.com'],
   },
 
   // Icon configuration to prevent conflicts
