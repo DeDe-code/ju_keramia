@@ -7,6 +7,11 @@ import {
   type AdminPasswordResetSchema,
 } from '~~/shared/adminPasswordResetSchema';
 
+// Use admin layout instead of default
+definePageMeta({
+  layout: 'admin',
+});
+
 const router = useRouter();
 const supabase = useSupabase();
 

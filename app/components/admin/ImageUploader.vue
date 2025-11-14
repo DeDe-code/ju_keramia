@@ -304,12 +304,14 @@ const clearSelection = () => {
     </div>
 
     <!-- Hidden File Input -->
-    <input
-      ref="fileInput"
-      type="file"
-      :accept="acceptString"
-      class="hidden"
-      @change="handleInputChange"
-    />
+    <UFormField name="fileInput">
+      <UInput
+        ref="fileInput"
+        type="file"
+        :accept="acceptString"
+        class="hidden"
+        @change="handleInputChange"
+      />
+    </UFormField>
   </div>
 </template>
