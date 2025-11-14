@@ -423,14 +423,16 @@ const hasAtLeastOneImage = computed(() => {
         </p>
 
         <!-- File Input (Hidden) -->
-        <input
-          ref="fileInputRef"
-          type="file"
-          accept="image/*"
-          multiple
-          class="hidden"
-          @change="handleFileSelect"
-        />
+        <UFormField name="productImages">
+          <UInput
+            ref="fileInputRef"
+            type="file"
+            accept="image/*"
+            multiple
+            class="hidden"
+            @change="handleFileSelect"
+          />
+        </UFormField>
 
         <!-- Upload Button -->
         <div class="flex items-center gap-ceramic-md">

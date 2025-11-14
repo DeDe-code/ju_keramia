@@ -4,6 +4,11 @@ import { useRoute, useRouter } from 'vue-router';
 import { adminLoginSchema } from '~~/shared/adminLoginSchema';
 import { useAdminAuth } from '~~/composables/useAdminAuth';
 
+// Use admin layout instead of default
+definePageMeta({
+  layout: 'admin',
+});
+
 const route = useRoute();
 const router = useRouter();
 
