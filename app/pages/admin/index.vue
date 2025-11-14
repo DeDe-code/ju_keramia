@@ -1,71 +1,34 @@
 <script setup lang="ts">
-import { useSupabase } from '~~/composables/useSupabase';
 import { ref, onMounted } from 'vue';
-import type { User } from '@supabase/supabase-js';
-import { adminLoginSchema, type AdminLoginSchema } from '~~/shared/adminLoginSchema';
+import { useRoute, useRouter } from 'vue-router';
+import { adminLoginSchema } from '~~/shared/adminLoginSchema';
+import { useAdminAuth } from '~~/composables/useAdminAuth';
 
-const user = ref<User | null>(null);
+const route = useRoute();
+const router = useRouter();
 
-const error = ref('');
-const resetMessage = ref('');
+// Use the admin authentication composable
+const { user, error, resetMessage, form, signIn, signOut, handleForgotPassword } = useAdminAuth();
 
-const supabase = useSupabase();
-
-const form = ref<AdminLoginSchema>({
-  email: '',
-  password: '',
-});
+// Schema for form validation
 const schema = adminLoginSchema;
 
-onMounted(async () => {
-  const { data } = await supabase.auth.getUser();
-  user.value = data.user;
+// Message to display after password reset
+const passwordResetSuccess = ref(false);
+
+onMounted(() => {
+  // Check if user was redirected after password reset
+  if (route.query.passwordReset === 'true') {
+    passwordResetSuccess.value = true;
+    // Clean up the URL by removing the query parameter
+    router.replace('/admin');
+
+    // Clear the message after 5 seconds
+    setTimeout(() => {
+      passwordResetSuccess.value = false;
+    }, 5000);
+  }
 });
-
-const signIn = async () => {
-  error.value = '';
-  const { error: signInError, data } = await supabase.auth.signInWithPassword({
-    email: form.value.email,
-    password: form.value.password,
-  });
-  if (signInError) error.value = signInError.message;
-  else user.value = data.user;
-};
-
-const signOut = async () => {
-  await supabase.auth.signOut();
-  user.value = null;
-};
-
-// In your admin login page
-const handleForgotPassword = async () => {
-  resetMessage.value = '';
-  if (!form.value.email) {
-    resetMessage.value = 'Please enter your email above first.';
-    setTimeout(() => {
-      resetMessage.value = '';
-    }, 5000);
-    return;
-  }
-  // Use redirectTo to ensure the reset link goes to /auth/reset
-  const siteUrl = useRuntimeConfig().public.siteUrl;
-  if (!siteUrl) {
-    resetMessage.value = 'Site URL is not configured.';
-    return;
-  }
-
-  const { error } = await supabase.auth.resetPasswordForEmail(form.value.email, {
-    redirectTo: `${siteUrl}/auth/reset`,
-  });
-  if (error) {
-    resetMessage.value = error.message;
-  } else {
-    resetMessage.value = 'Password reset email sent. Please check your inbox.';
-    setTimeout(() => {
-      resetMessage.value = '';
-    }, 5000);
-  }
-};
 </script>
 
 <template>
@@ -74,6 +37,14 @@ const handleForgotPassword = async () => {
       v-if="!user"
       class="w-lg max-w-lg h-[23rem] flex flex-col justify-center mt-ceramic-xl p-ceramic-sm border border-stone-300 shadow-sm"
     >
+      <!-- Password reset success message -->
+      <div
+        v-if="passwordResetSuccess"
+        class="mb-ceramic-sm px-ceramic-sm py-ceramic-xs text-clay-800"
+      >
+        Log In with the new password
+      </div>
+
       <UForm :schema="schema" :state="form" @submit.prevent="signIn">
         <UFormField name="email">
           <UInput
@@ -134,8 +105,9 @@ const handleForgotPassword = async () => {
           Logout
         </button>
       </div>
-      <!-- Admin dashboard content goes here -->
-      <slot />
+
+      <!-- Dashboard Content with Tabs -->
+      <AdminDashboardContent />
     </div>
   </div>
 </template>

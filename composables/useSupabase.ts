@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
-import { useRuntimeConfig } from '#app';
+
+// Singleton instance
+let supabaseClient: ReturnType<typeof createClient> | null = null;
 
 export const useSupabase = () => {
+  // Return existing client if already created
+  if (supabaseClient) {
+    return supabaseClient;
+  }
+
   const config = useRuntimeConfig();
   const supabaseUrl = config.public.supabaseUrl;
   const supabaseKey = config.public.supabaseAnonKey;
@@ -10,5 +17,7 @@ export const useSupabase = () => {
     throw new Error('Supabase URL and anon key must be set in environment variables');
   }
 
-  return createClient(supabaseUrl, supabaseKey);
+  // Create and cache the client
+  supabaseClient = createClient(supabaseUrl, supabaseKey);
+  return supabaseClient;
 };

@@ -129,11 +129,43 @@ export default defineAppConfig({
         size: 'md',
       },
     },
+
+    switch: {
+      slots: {
+        base: 'w-ceramic-lg h-ceramic-md bg-stone-300 rounded-full relative transition-colors duration-200 ease-in-out cursor-pointer',
+        thumb:
+          'w-ceramic-sm h-ceramic-sm bg-cream-25 rounded-full shadow-md absolute top-1 left-1 transition-transform duration-200 ease-in-out',
+      },
+      variants: {
+        size: {
+          sm: {
+            base: 'w-ceramic-md h-ceramic-sm',
+            thumb: 'w-ceramic-xs h-ceramic-xs top-0.5 left-0.5',
+          },
+          md: {
+            base: 'w-ceramic-lg h-ceramic-md',
+            thumb: 'w-ceramic-sm h-ceramic-sm top-1 left-1',
+          },
+          lg: {
+            base: 'w-ceramic-xl h-ceramic-lg',
+            thumb: 'w-ceramic-md h-ceramic-md top-1.5 left-1.5',
+          },
+        },
+      },
+    },
     // Form Components
     formField: {
       slots: {
         root: 'my-ceramic-sm',
         error: '!text-ceramic-error font-ceramic-sans text-ceramic-sm mt-0 ml-ceramic-sm',
+      },
+    },
+    selectMenu: {
+      slots: {
+        trigger:
+          'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] !bg-cream-50 border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none',
+        content: 'bg-cream-50 border-stone-200 rounded-[var(--radius-ceramic-md)] shadow-lg',
+        item: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] px-[var(--spacing-ceramic-md)] py-[calc(var(--spacing-ceramic-md)*0.75)] hover:!bg-clay-50 active:!bg-clay-100 data-[highlighted]:!bg-clay-50 data-[highlighted]:active:!bg-clay-100',
       },
     },
 

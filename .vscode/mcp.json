@@ -4,6 +4,10 @@
       "type": "stdio",
       "command": "npx",
       "args": ["@eslint/mcp@latest"]
+    },
+    "nuxt-ui": {
+      "type": "http",
+      "url": "https://ui.nuxt.com/mcp"
     }
   }
 }

@@ -120,9 +120,15 @@ const updateUserPassword = async () => {
     }
 
     if (data) {
-      successMsg.value = 'Password reset successfully!';
-      // Small delay optional; you can also push immediately
-      await router.push('/admin');
+      successMsg.value = 'Password reset successfully! Redirecting to login...';
+
+      // Sign out the user after password change
+      await supabase.auth.signOut();
+
+      // Redirect to admin login page after a brief delay with a query parameter
+      setTimeout(() => {
+        router.push('/admin?passwordReset=true');
+      }, 1500);
     }
   } catch (error) {
     errorMsg.value = 'An unexpected error occurred. Please try again.';
