@@ -8,7 +8,7 @@
 </script>
 
 <template>
-  <div>
+  <div class="min-h-screen bg-stone-50">
     <main>
       <slot />
     </main>

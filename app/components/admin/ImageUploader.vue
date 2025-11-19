@@ -153,7 +153,7 @@ const {
       </div>
     </div>
 
-    <!-- Hidden file input -->
+    <!-- Hidden File Input -->
     <UFormField name="fileInput">
       <UInput
         ref="fileInput"
