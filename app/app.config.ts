@@ -50,7 +50,7 @@ export default defineAppConfig({
         // Base ceramic styling applied to ALL UButtons
         base: [
           // Typography & Spacing
-          'font-ceramic-sans transition-all duration-200 ease-in-out',
+          '!p-4 !font-ceramic-sans !transition-all !duration-200 ease-in-out !rounded-none',
           // Focus & Accessibility
           // 'focus:ring-2 focus:ring-offset-2 focus:outline-none',
           // Hover
@@ -221,10 +221,10 @@ export default defineAppConfig({
     // Card component with ceramic aesthetics
     card: {
       slots: {
-        root: 'bg-cream-50 border border-stone-200 rounded-[var(--radius-ceramic-lg)] shadow-sm hover:shadow-md transition-shadow duration-200',
-        header: 'p-[var(--spacing-ceramic-lg)] border-b border-stone-100',
-        body: 'p-[var(--spacing-ceramic-lg)]',
-        footer: 'p-[var(--spacing-ceramic-lg)] border-t border-stone-100 bg-cream-25',
+        root: '!w-sm !bg-cream-25 !rounded-none !shadow-lg hover:!shadow-xl !transition-shadow duration-200  ',
+        header: 'p-0  sm:px-0',
+        body: 'p-0 px-0 ',
+        footer: 'sm:px-0pl-ceramic-sm my-ceramic-sm',
       },
     },
   },

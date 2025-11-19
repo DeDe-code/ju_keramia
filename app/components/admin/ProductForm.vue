@@ -1,20 +1,13 @@
 <script setup lang="ts">
+/**
+ * Product form for creating/editing ceramic products.
+ * Handles product info, images (up to 3), dimensions, materials, and status flags.
+ * Uploads images to Cloudflare R2 on submit.
+ */
+
 import { ref, computed } from 'vue';
 import { useImageUpload } from '~~/composables/useImageUpload';
 import type { ProductFormData } from '~~/types/admin';
-
-/**
- * ProductForm Component
- *
- * Form for creating/editing products with:
- * - Basic product information (name, slug, description, price)
- * - 3 product images (800x800px recommended)
- * - Category selection
- * - Dimensions (height, width, depth)
- * - Materials (multiple selection)
- * - Stock status
- * - Featured flag
- */
 
 interface Props {
   product?: ProductFormData;
@@ -31,10 +24,7 @@ const emit = defineEmits<{
   cancel: [];
 }>();
 
-// Toast notification
 const toast = useToast();
-
-// Image upload composable
 const { uploadImage } = useImageUpload();
 
 // Form state
@@ -51,7 +41,6 @@ const form = ref<ProductFormData>({
   featured: props.product?.featured ?? false,
 });
 
-// Category options
 const categories = [
   { label: 'Bowls', value: 'bowls' },
   { label: 'Plates', value: 'plates' },
@@ -60,7 +49,6 @@ const categories = [
   { label: 'Decorative', value: 'decorative' },
 ];
 
-// Material options (common ceramic materials)
 const materialOptions = [
   { label: 'Porcelain', value: 'Porcelain' },
   { label: 'Stoneware', value: 'Stoneware' },
@@ -70,20 +58,12 @@ const materialOptions = [
   { label: 'Unglazed Ceramic', value: 'Unglazed Ceramic' },
 ];
 
-// Form validation state
 const errors = ref<Record<string, string>>({});
 const isSubmitting = ref(false);
-
-// Image handling - store File objects before upload
 const selectedFiles = ref<File[]>([]);
 const imagePreviewUrls = ref<string[]>([]);
-
-// File input ref
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
-/**
- * Generate slug from product name
- */
 const generateSlug = () => {
   form.value.slug = form.value.name
     .toLowerCase()
@@ -91,16 +71,12 @@ const generateSlug = () => {
     .replace(/^-+|-+$/g, '');
 };
 
-/**
- * Handle file selection (multiple files, max 3)
- */
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const files = Array.from(target.files || []);
 
   if (files.length === 0) return;
 
-  // Limit to 3 images
   if (files.length > 3) {
     toast.add({
       title: 'Too Many Files',
@@ -110,18 +86,15 @@ const handleFileSelect = (event: Event) => {
     return;
   }
 
-  // Validate each file
   const validFiles: File[] = [];
   const errors: string[] = [];
 
   for (const file of files) {
-    // Check file type
     if (!file.type.startsWith('image/')) {
       errors.push(`${file.name} is not an image`);
       continue;
     }
 
-    // Check file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       errors.push(`${file.name} exceeds 5MB`);
       continue;
@@ -140,18 +113,11 @@ const handleFileSelect = (event: Event) => {
 
   if (validFiles.length === 0) return;
 
-  // Store files
   selectedFiles.value = validFiles;
-
-  // Create preview URLs
   imagePreviewUrls.value = validFiles.map((file) => URL.createObjectURL(file));
 };
 
-/**
- * Remove a selected image
- */
 const removeSelectedImage = (index: number) => {
-  // Revoke object URL to free memory
   if (imagePreviewUrls.value[index]) {
     URL.revokeObjectURL(imagePreviewUrls.value[index]);
   }
@@ -160,16 +126,10 @@ const removeSelectedImage = (index: number) => {
   imagePreviewUrls.value.splice(index, 1);
 };
 
-/**
- * Trigger file input click
- */
 const triggerFileInput = () => {
   fileInputRef.value?.click();
 };
 
-/**
- * Validate form
- */
 const validateForm = (): boolean => {
   errors.value = {};
 
@@ -185,7 +145,6 @@ const validateForm = (): boolean => {
     errors.value.price = 'Price must be greater than 0';
   }
 
-  // Check if we have images (either uploaded already or selected files)
   const hasExistingImages = form.value.images.filter((img) => img).length > 0;
   const hasSelectedFiles = selectedFiles.value.length > 0;
 
@@ -200,9 +159,6 @@ const validateForm = (): boolean => {
   return Object.keys(errors.value).length === 0;
 };
 
-/**
- * Upload images to Cloudflare R2
- */
 const uploadImages = async (): Promise<string[]> => {
   const uploadedUrls: string[] = [];
 
@@ -229,9 +185,6 @@ const uploadImages = async (): Promise<string[]> => {
   return uploadedUrls;
 };
 
-/**
- * Handle form submission
- */
 const handleSubmit = async () => {
   if (!validateForm()) {
     toast.add({
@@ -245,7 +198,6 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
 
   try {
-    // Upload new images if any
     let imageUrls = form.value.images.filter((img) => img);
 
     if (selectedFiles.value.length > 0) {
@@ -259,21 +211,16 @@ const handleSubmit = async () => {
       imageUrls = [...imageUrls, ...newImageUrls];
     }
 
-    // Create cleaned product with uploaded images
     const cleanedProduct = {
       ...form.value,
       images: imageUrls,
     };
 
-    // Emit to parent component
     emit('submit', cleanedProduct);
 
-    // Clean up object URLs
     imagePreviewUrls.value.forEach((url) => URL.revokeObjectURL(url));
     selectedFiles.value = [];
     imagePreviewUrls.value = [];
-
-    // Success toast will be shown by parent component
   } catch (err) {
     toast.add({
       title: 'Error',
@@ -284,16 +231,11 @@ const handleSubmit = async () => {
   }
 };
 
-/**
- * Handle cancel
- */
 const handleCancel = () => {
-  // Clean up object URLs
   imagePreviewUrls.value.forEach((url) => URL.revokeObjectURL(url));
   emit('cancel');
 };
 
-// Computed: Check if we have at least one image
 const hasAtLeastOneImage = computed(() => {
   return form.value.images.some((img) => img) || selectedFiles.value.length > 0;
 });
