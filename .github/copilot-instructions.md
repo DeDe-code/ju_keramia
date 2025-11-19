@@ -7,7 +7,7 @@ Ju Keramia is a ceramics business website built with Nuxt 3, featuring a custom 
 ## Architecture & Stack
 
 - **Framework**: Nuxt 3.x with TypeScript
-- **UI Library**: Nuxt UI with extensive custom theming
+- **UI Library**: Nuxt UI v3 with extensive custom theming
 - **Styling**: Tailwind CSS with custom ceramic design tokens
 - **State**: Pinia for global state management
 - **Content**: Nuxt Content module
@@ -15,6 +15,502 @@ Ju Keramia is a ceramics business website built with Nuxt 3, featuring a custom 
 - **Code Quality**: ESLint, Prettier, Husky with lint-staged
 - **Icons**: Nuxt Icon with Heroicons collection
 - **Images**: Nuxt Image for optimization
+
+## Nuxt UI Component Library
+
+The project uses **Nuxt UI v3** (`@nuxt/ui: ^3.3.4`) as the primary component library. All components are auto-imported and heavily customized via `app.config.ts` to match the ceramic design system.
+
+### Core Nuxt UI Components
+
+#### UButton
+
+Button component with multiple variants and states.
+
+**Props:**
+
+- `color`: `primary` | `secondary` | `success` | `info` | `warning` | `error` | `neutral`
+- `variant`: `solid` | `outline` | `soft` | `subtle` | `ghost` | `link`
+- `size`: `xs` | `sm` | `md` | `lg` | `xl`
+- `icon`: Icon name (e.g., `i-heroicons-plus`)
+- `leading-icon` / `trailing-icon`: Position-specific icons
+- `loading`: Show loading spinner
+- `disabled`: Disable button
+- `to`: Navigate to route (acts as link)
+- `type`: `button` | `submit` | `reset`
+
+**Usage:**
+
+```vue
+<UButton color="primary" variant="solid" size="md" icon="i-heroicons-plus" @click="handleClick">
+  Add Product
+</UButton>
+
+<!-- Icon-only button -->
+<UButton icon="i-heroicons-trash" variant="ghost" color="error" square aria-label="Delete" />
+
+<!-- Button as link -->
+<UButton to="/shop" variant="outline">
+  View Shop
+</UButton>
+```
+
+#### UCard
+
+Container component with header, body, and footer sections.
+
+**Props:**
+
+- `variant`: `solid` | `outline` | `soft` | `subtle`
+
+**Slots:**
+
+- `header`: Card header content
+- `default`: Card body content
+- `footer`: Card footer content
+
+**Usage:**
+
+```vue
+<UCard variant="outline">
+  <template #header>
+    <h3 class="text-ceramic-xl font-ceramic-display">Product Details</h3>
+  </template>
+  
+  <p>Card content goes here</p>
+  
+  <template #footer>
+    <div class="flex gap-ceramic-sm">
+      <UButton>Save</UButton>
+      <UButton variant="outline">Cancel</UButton>
+    </div>
+  </template>
+</UCard>
+```
+
+#### UIcon
+
+Display icons from Iconify or custom SVG components.
+
+**Props:**
+
+- `name`: Icon name (e.g., `i-heroicons-user`, `i-heroicons-shopping-cart`)
+- `class`: Additional classes for sizing and styling
+
+**Usage:**
+
+```vue
+<UIcon name="i-heroicons-home" class="!text-ceramic-xl text-clay-600" />
+<UIcon name="i-heroicons-arrow-right" class="!text-ceramic-lg" />
+```
+
+**Icon Sizing:**
+
+- Use `!text-ceramic-*` classes for consistent sizing
+- Common sizes: `!text-ceramic-base`, `!text-ceramic-lg`, `!text-ceramic-xl`, `!text-ceramic-3xl`
+
+#### UInput
+
+Text input with icon and validation support.
+
+**Props:**
+
+- `v-model`: Bind to reactive value
+- `type`: Input type (text, email, password, number, etc.)
+- `placeholder`: Placeholder text
+- `icon` / `leading-icon` / `trailing-icon`: Add icons
+- `loading`: Show loading spinner
+- `disabled`: Disable input
+- `color`: `primary` | `error` | `neutral` (for validation states)
+- `variant`: `outline` | `soft` | `subtle` | `ghost`
+- `size`: `xs` | `sm` | `md` | `lg` | `xl`
+
+**Slots:**
+
+- `leading`: Custom leading content
+- `trailing`: Custom trailing content (e.g., clear button)
+
+**Usage:**
+
+```vue
+<UInput
+  v-model="email"
+  type="email"
+  placeholder="Enter your email"
+  icon="i-heroicons-at-sign"
+  size="md"
+/>
+
+<!-- With trailing clear button -->
+<UInput v-model="search" placeholder="Search..." icon="i-heroicons-magnifying-glass">
+  <template #trailing>
+    <UButton 
+      v-if="search" 
+      icon="i-heroicons-x-mark" 
+      variant="ghost" 
+      size="sm"
+      @click="search = ''"
+    />
+  </template>
+</UInput>
+```
+
+#### UForm
+
+Form validation with schema support (Zod, Valibot, Yup, etc.).
+
+**Props:**
+
+- `state`: Reactive object with form data
+- `schema`: Validation schema (Zod, Valibot, etc.)
+- `validate`: Custom validation function
+- `validate-on`: `['input', 'blur', 'change']` - When to validate
+- `disabled`: Disable all form inputs
+
+**Events:**
+
+- `@submit`: Form submission (receives validated data)
+- `@error`: Validation errors
+
+**Exposed Methods:**
+
+- `validate()`: Manually trigger validation
+- `clear()`: Clear all errors
+- `submit()`: Trigger form submission
+
+**Usage:**
+
+```vue
+<script setup lang="ts">
+import * as v from 'valibot';
+
+const schema = v.object({
+  name: v.pipe(v.string(), v.minLength(2)),
+  email: v.pipe(v.string(), v.email()),
+});
+
+const state = reactive({
+  name: '',
+  email: '',
+});
+
+async function onSubmit(event) {
+  console.log('Validated data:', event.data);
+}
+</script>
+
+<template>
+  <UForm :state="state" :schema="schema" @submit="onSubmit">
+    <UFormField label="Name" name="name" required>
+      <UInput v-model="state.name" />
+    </UFormField>
+
+    <UFormField label="Email" name="email" required>
+      <UInput v-model="state.email" type="email" />
+    </UFormField>
+
+    <UButton type="submit">Submit</UButton>
+  </UForm>
+</template>
+```
+
+#### UFormField
+
+Wrapper for form inputs with label, validation, and help text.
+
+**Props:**
+
+- `name`: Field name (must match schema)
+- `label`: Field label
+- `description`: Help text below input
+- `required`: Show required indicator
+- `hint`: Hint text next to label
+- `error`: Manual error message
+
+**Usage:**
+
+```vue
+<UFormField
+  label="Product Name"
+  name="name"
+  description="Enter a unique name for the product"
+  required
+>
+  <UInput v-model="state.name" />
+</UFormField>
+```
+
+#### USelect
+
+Dropdown select component.
+
+**Props:**
+
+- `v-model`: Selected value
+- `items`: Array of options (string[] or object[])
+- `multiple`: Allow multiple selections
+- `placeholder`: Placeholder text
+- `disabled`: Disable select
+
+**Usage:**
+
+```vue
+<USelect
+  v-model="category"
+  :items="['bowls', 'plates', 'vases', 'mugs']"
+  placeholder="Select category"
+/>
+
+<!-- With objects -->
+<USelect
+  v-model="selectedOption"
+  :items="[
+    { label: 'Option 1', value: 'opt1' },
+    { label: 'Option 2', value: 'opt2' },
+  ]"
+/>
+```
+
+#### UTextarea
+
+Multi-line text input.
+
+**Props:**
+
+- `v-model`: Bind to reactive value
+- `placeholder`: Placeholder text
+- `rows`: Number of visible rows
+- `disabled`: Disable textarea
+- `variant`: `outline` | `soft` | `subtle` | `ghost`
+
+**Usage:**
+
+```vue
+<UTextarea v-model="description" placeholder="Enter product description" :rows="4" />
+```
+
+#### UModal
+
+Modal/dialog overlay component.
+
+**Props:**
+
+- `v-model`: Control modal visibility
+- `title`: Modal title
+- `description`: Modal description
+
+**Slots:**
+
+- `header`: Custom header
+- `default`: Modal content
+- `footer`: Modal footer
+
+**Usage:**
+
+```vue
+<script setup>
+const isOpen = ref(false);
+</script>
+
+<template>
+  <UButton @click="isOpen = true">Open Modal</UButton>
+
+  <UModal v-model="isOpen" title="Confirm Action">
+    <p>Are you sure you want to proceed?</p>
+
+    <template #footer>
+      <div class="flex gap-ceramic-sm justify-end">
+        <UButton variant="outline" @click="isOpen = false">Cancel</UButton>
+        <UButton @click="confirmAction">Confirm</UButton>
+      </div>
+    </template>
+  </UModal>
+</template>
+```
+
+#### UDropdownMenu
+
+Dropdown menu with items.
+
+**Props:**
+
+- `items`: Array of menu items with `label`, `icon`, `click`, etc.
+
+**Usage:**
+
+```vue
+<UDropdownMenu
+  :items="[
+    [
+      { label: 'Edit', icon: 'i-heroicons-pencil', click: () => edit() },
+      { label: 'Delete', icon: 'i-heroicons-trash', click: () => remove() },
+    ],
+  ]"
+>
+  <UButton icon="i-heroicons-ellipsis-vertical" variant="ghost" />
+</UDropdownMenu>
+```
+
+### Nuxt UI Customization Patterns
+
+#### Using the `ui` Prop
+
+Override component styles using the `ui` prop:
+
+```vue
+<UButton
+  :ui="{
+    base: 'font-bold rounded-full',
+    label: 'uppercase',
+  }"
+>
+  Custom Button
+</UButton>
+
+<UInput
+  :ui="{
+    base: 'border-2',
+    trailing: 'pe-1',
+  }"
+/>
+```
+
+#### Using the `class` Prop
+
+Add additional classes to the base element:
+
+```vue
+<UButton class="w-full shadow-lg">
+  Full Width Button
+</UButton>
+```
+
+#### Global Theming via app.config.ts
+
+Customize default styles globally (already configured for ceramic theme):
+
+```typescript
+// app.config.ts
+export default defineAppConfig({
+  ui: {
+    button: {
+      slots: {
+        base: 'rounded-md font-medium ...',
+        label: 'truncate',
+      },
+      variants: {
+        color: { primary: '...' },
+        size: { md: { base: 'px-2.5 py-1.5 ...' } },
+      },
+      defaultVariants: {
+        color: 'primary',
+        variant: 'solid',
+        size: 'md',
+      },
+    },
+  },
+});
+```
+
+### Ceramic Design System Integration
+
+When using Nuxt UI components, always integrate with the ceramic design system:
+
+**Colors:**
+
+```vue
+<!-- Map ceramic colors to Nuxt UI colors -->
+<UButton color="primary">Clay Primary</UButton>
+<UButton color="neutral">Stone Neutral</UButton>
+```
+
+**Spacing:**
+
+```vue
+<div class="flex gap-ceramic-sm">
+  <UButton>Button 1</UButton>
+  <UButton>Button 2</UButton>
+</div>
+```
+
+**Typography:**
+
+```vue
+<UCard>
+  <template #header>
+    <h2 class="font-ceramic-display text-ceramic-2xl text-clay-800">
+      Card Title
+    </h2>
+  </template>
+</UCard>
+```
+
+**Icons:**
+
+```vue
+<!-- Always use ceramic icon sizing -->
+<UIcon name="i-heroicons-home" class="!text-ceramic-xl text-clay-600" />
+<UButton icon="i-heroicons-plus" class="hover:!text-clay-800" />
+```
+
+### Form Validation with Nuxt UI
+
+The project should use schema validation with Zod or Valibot:
+
+```vue
+<script setup lang="ts">
+import * as v from 'valibot';
+
+const schema = v.object({
+  name: v.pipe(v.string(), v.minLength(2, 'Too short')),
+  email: v.pipe(v.string(), v.email('Invalid email')),
+  price: v.pipe(v.number(), v.minValue(0, 'Must be positive')),
+});
+
+const state = reactive({ name: '', email: '', price: 0 });
+</script>
+
+<template>
+  <UForm :state="state" :schema="schema" @submit="handleSubmit">
+    <UFormField label="Name" name="name">
+      <UInput v-model="state.name" />
+    </UFormField>
+
+    <UFormField label="Email" name="email">
+      <UInput v-model="state.email" type="email" />
+    </UFormField>
+
+    <UFormField label="Price" name="price">
+      <UInput v-model="state.price" type="number" />
+    </UFormField>
+
+    <UButton type="submit">Save Product</UButton>
+  </UForm>
+</template>
+```
+
+### Accessibility with Nuxt UI
+
+Always ensure accessibility when using Nuxt UI components:
+
+```vue
+<!-- Icon-only buttons need aria-label -->
+<UButton
+  icon="i-heroicons-trash"
+  variant="ghost"
+  aria-label="Delete product"
+  @click="deleteProduct"
+/>
+
+<!-- Forms need proper labels -->
+<UFormField label="Email" name="email" required>
+  <UInput 
+    v-model="email" 
+    type="email"
+    placeholder="your@email.com"
+    aria-describedby="email-help"
+  />
+</UFormField>
+```
 
 ## Key Design System Patterns
 
@@ -72,10 +568,18 @@ app/
 
 Components are heavily customized via `app.config.ts`:
 
-- **Buttons**: Custom ceramic sizing and styling
-- **Inputs**: Ceramic border colors and focus states
-- **Cards**: Cream backgrounds with stone borders
-- **Navigation**: Custom link styling with clay hover states
+- **Buttons**: Custom ceramic sizing and styling with clay/sage color variants
+- **Inputs**: Ceramic border colors and focus states matching the design system
+- **Cards**: Cream backgrounds with stone borders for cohesive aesthetic
+- **Navigation**: Custom link styling with clay hover states and transitions
+- **Forms**: Integrated validation styling with ceramic error colors
+
+**Theming Strategy:**
+
+1. Define ceramic color mappings in `app.config.ts`
+2. Use `ui` prop for component-specific overrides
+3. Apply ceramic utility classes for spacing and typography
+4. Ensure all interactive states use ceramic colors (hover, focus, active)
 
 ### Image Handling
 

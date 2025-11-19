@@ -27,6 +27,11 @@ export default defineNuxtConfig({
     },
   },
 
+  // Route rules for redirects and optimization
+  routeRules: {
+    '/admin/hero-images': { redirect: '/admin/hero-images/landing' },
+  },
+
   // Enable modern View Transitions API for smooth page transitions
   experimental: {
     viewTransition: true,
@@ -62,8 +67,12 @@ export default defineNuxtConfig({
     format: ['webp', 'avif', 'jpg'],
     // Enable local image optimization
     provider: 'ipx',
-    // Configure domains for external images (if needed)
+    // Configure domains for external images
     domains: ['cdn.jukeramia.com'],
+    // IPX configuration
+    ipx: {
+      maxAge: 60 * 60 * 24 * 7, // 7 days cache
+    },
   },
 
   // Icon configuration to prevent conflicts

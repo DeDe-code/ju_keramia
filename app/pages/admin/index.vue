@@ -37,10 +37,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex justify-center min-h-screen py-ceramic-xl px-ceramic-md bg-cream-25">
+  <div class="min-h-screen bg-cream-25">
     <div
       v-if="!user"
-      class="w-lg max-w-lg h-[23rem] flex flex-col justify-center mt-ceramic-xl p-ceramic-sm border border-stone-300 shadow-sm"
+      class="w-lg max-w-lg h-[23rem] mx-auto flex flex-col justify-center mt-ceramic-xl p-ceramic-sm border border-stone-300 shadow-sm"
     >
       <!-- Password reset success message -->
       <div
@@ -101,14 +101,13 @@ onMounted(() => {
       </div>
     </div>
     <div v-else>
-      <div class="flex justify-between items-center mb-ceramic-lg">
+      <div
+        class="flex justify-between items-center mb-ceramic-lg px-ceramic-lg sm:px-ceramic-xl lg:px-ceramic-3xl py-ceramic-lg"
+      >
         <h2 class="font-ceramic-display text-ceramic-2xl text-clay-800">Admin Dashboard</h2>
-        <button
-          class="bg-stone-200 text-clay-700 px-ceramic-sm py-ceramic-xs rounded-ceramic-md hover:!text-clay-800 transition-all duration-200"
-          @click="signOut"
-        >
+        <UButton class="text-ceramic-error border-2 border-ceramic-error" @click="signOut">
           Logout
-        </button>
+        </UButton>
       </div>
 
       <!-- Dashboard Content with Tabs -->
