@@ -6,7 +6,7 @@
 </script>
 
 <template>
-  <div class="w-full px-ceramic-lg sm:px-ceramic-xl lg:px-ceramic-3xl py-ceramic-lg">
+  <div class="w-full px-ceramic-lg sm:px-ceramic-xl lg:px-ceramic-3xl py-ceramic-lg border-2">
     <AdminNavigation />
   </div>
 </template>

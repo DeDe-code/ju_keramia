@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useHeroImages } from '~~/composables/useHeroImages';
 import { useNotifications } from '~~/composables/useNotifications';
+import { useAdminAutoLogout } from '~~/composables/useAdminAutoLogout';
 import { HERO_IMAGE_CONFIG } from '~~/config/heroImagePages';
 
 /**
@@ -10,6 +11,9 @@ import { HERO_IMAGE_CONFIG } from '~~/config/heroImagePages';
 definePageMeta({
   layout: 'admin',
 });
+
+// Auto-logout for security
+useAdminAutoLogout();
 
 const { notifyUploadSuccess, notifyUploadError, notifyFetchError } = useNotifications();
 const { getImage, loading, error, fetchHeroImages, refreshImages } = useHeroImages({

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { adminLoginSchema } from '~~/shared/adminLoginSchema';
 import { useAdminAuth } from '~~/composables/useAdminAuth';
+import { useAdminAutoLogout } from '~~/composables/useAdminAutoLogout';
 
 // Use admin layout instead of default
 definePageMeta({
@@ -15,11 +16,25 @@ const router = useRouter();
 // Use the admin authentication composable
 const { user, error, resetMessage, form, signIn, signOut, handleForgotPassword } = useAdminAuth();
 
+// Auto-logout composable (only active when user is logged in)
+const { cleanup } = useAdminAutoLogout();
+
 // Schema for form validation
 const schema = adminLoginSchema;
 
 // Message to display after password reset
 const passwordResetSuccess = ref(false);
+
+// Watch user state to manage auto-logout
+watch(
+  () => user.value,
+  (newUser) => {
+    if (!newUser) {
+      // User logged out - cleanup auto-logout listeners
+      cleanup();
+    }
+  }
+);
 
 onMounted(() => {
   // Check if user was redirected after password reset
@@ -102,7 +117,7 @@ onMounted(() => {
     </div>
     <div v-else>
       <div
-        class="flex justify-between items-center mb-ceramic-lg px-ceramic-lg sm:px-ceramic-xl lg:px-ceramic-3xl py-ceramic-lg"
+        class="flex justify-between items-center mb-ceramic-lg px-ceramic-lg sm:px-ceramic-xl lg:px-ceramic-3xl py-ceramic-lg border-2"
       >
         <h2 class="font-ceramic-display text-ceramic-2xl text-clay-800">Admin Dashboard</h2>
         <UButton class="text-ceramic-error border-2 border-ceramic-error" @click="signOut">

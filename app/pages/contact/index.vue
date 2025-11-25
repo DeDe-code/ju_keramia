@@ -50,10 +50,11 @@ onMounted(async () => {
               contact.
             </h1>
 
-            <p class="text-stone-600 leading-relaxed">
-              Interested in a collaboration? Fancy some tableware for your café or restaurant, or
-              even a bespoke dinner set for your home? Fill in the form below and let's get
-              designing and making together.
+            <p class="text-stone-600 leading-relaxed lowercase">
+              Have a question, an idea, or a piece you’d like to bring to life? Whether you’re
+              looking for custom tableware for your home, a small collection for your café or
+              restaurant, or a unique gift, I’d love to hear from you. Share a few details below and
+              we’ll start shaping your ju_keramia piece together.
             </p>
           </div>
 
