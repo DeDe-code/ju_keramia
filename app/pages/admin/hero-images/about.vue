@@ -11,8 +11,7 @@ import { HERO_IMAGE_CONFIG } from '~~/config/heroImagePages';
 definePageMeta({
   layout: 'admin',
 });
-
-// Auto-logout for security
+  // Auto-logout for security
 useAdminAutoLogout();
 
 const { notifyUploadSuccess, notifyUploadError, notifyFetchError } = useNotifications();
