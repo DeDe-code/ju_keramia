@@ -4,11 +4,11 @@
  * Emits events to parent for selection management and data refresh.
  */
 
-import { useProductDeletion } from '~~/composables/useProductDeletion';
+import { useProductsStore } from '~~/stores/products';
 
-const { deleteAllProducts, deleteSelectedProducts } = useProductDeletion();
+const productsStore = useProductsStore();
 
-const props = defineProps<{
+defineProps<{
   selectedProductIds: string[];
 }>();
 
@@ -18,16 +18,18 @@ const emit = defineEmits<{
 }>();
 
 const handleDeleteAllProducts = async () => {
-  const success = await deleteAllProducts();
+  const success = await productsStore.deleteAllProducts();
   if (success) {
+    productsStore.clearSelection();
     emit('clearSelection');
     emit('refresh');
   }
 };
 
 const handleDeleteSelectedProducts = async () => {
-  const success = await deleteSelectedProducts(props.selectedProductIds);
+  const success = await productsStore.deleteSelectedProducts();
   if (success) {
+    productsStore.clearSelection();
     emit('clearSelection');
     emit('refresh');
   }
