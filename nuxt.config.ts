@@ -2,7 +2,15 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/ui', '@nuxt/icon', '@nuxtjs/google-fonts'],
+  modules: [
+    '@nuxt/eslint',
+    '@nuxt/image',
+    '@nuxt/ui',
+    '@nuxt/icon',
+    '@nuxtjs/google-fonts',
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt',
+  ],
   css: ['./app/assets/css/main.css'],
 
   // Runtime configuration for API keys

@@ -1,32 +1,32 @@
 /**
- * Admin Auto-Logout Composable
+ * Auth Auto-Logout Client Plugin
  *
  * Implements automatic logout for admin users based on:
  * 1. Inactivity timeout (5 minutes of no user interaction)
  * 2. Tab visibility (5 minutes after leaving the tab)
- * 3. Tab/window close (immediate logout)
+ * 3. Tab/window close (broadcasts logout to other tabs)
  *
  * Security features:
  * - Tracks mouse, keyboard, scroll, and touch events
  * - Monitors tab visibility changes
  * - Cleans up on logout to prevent memory leaks
  * - Cross-tab logout synchronization via localStorage
+ *
+ * CLIENT-ONLY: Runs only in browser environment
  */
 
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useAdminAuth } from './useAdminAuth';
-import { useNotifications } from './useNotifications';
+import { defineNuxtPlugin } from 'nuxt/app';
+import { useAuthStore } from '../stores/auth';
+import { AUTO_LOGOUT_CONFIG, safeLocalStorage } from '../stores/index';
 
-const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
-const LOGOUT_EVENT_KEY = 'admin_auto_logout';
+export default defineNuxtPlugin(() => {
+  // Only run on client
+  if (!import.meta.client) return;
 
-export const useAdminAutoLogout = () => {
-  const { signOut } = useAdminAuth();
-  const { notifyWarning } = useNotifications();
+  const authStore = useAuthStore();
 
   let inactivityTimer: NodeJS.Timeout | null = null;
   let visibilityTimer: NodeJS.Timeout | null = null;
-  const isTabVisible = ref(true);
 
   /**
    * Clear all timers
@@ -48,55 +48,53 @@ export const useAdminAutoLogout = () => {
   const handleAutoLogout = async (reason: 'inactivity' | 'tab_hidden' | 'tab_closed') => {
     clearTimers();
 
-    // Notify user about logout reason
     const messages = {
       inactivity: 'Logged out due to 5 minutes of inactivity',
       tab_hidden: 'Logged out after 5 minutes away from admin panel',
       tab_closed: 'Logged out automatically',
     };
 
-    notifyWarning('Auto Logout', messages[reason]);
+    console.warn(`Auto-logout: ${messages[reason]}`);
 
     // Broadcast logout to other tabs
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(LOGOUT_EVENT_KEY, Date.now().toString());
-    }
+    safeLocalStorage.setItem(AUTO_LOGOUT_CONFIG.LOGOUT_EVENT_KEY, Date.now().toString());
 
     // Perform logout
-    await signOut();
+    await authStore.signOut();
   };
 
   /**
-   * Reset inactivity timer
+   * Reset inactivity timer on user activity
    */
   const resetInactivityTimer = () => {
-    clearTimers();
+    // Only start timer if user is authenticated and tab is visible
+    if (!authStore.isAuthenticated || !authStore.isTabVisible) return;
 
-    // Only start timer if tab is visible
-    if (isTabVisible.value) {
-      inactivityTimer = setTimeout(() => {
-        handleAutoLogout('inactivity');
-      }, INACTIVITY_TIMEOUT);
-    }
+    clearTimers();
+    authStore.resetActivity();
+
+    inactivityTimer = setTimeout(() => {
+      handleAutoLogout('inactivity');
+    }, AUTO_LOGOUT_CONFIG.INACTIVITY_TIMEOUT);
   };
 
   /**
    * Handle tab visibility change
    */
   const handleVisibilityChange = () => {
-    if (typeof document === 'undefined') return;
+    if (!authStore.isAuthenticated) return;
 
-    isTabVisible.value = !document.hidden;
+    const isVisible = !document.hidden;
+    authStore.setTabVisibility(isVisible);
 
     if (document.hidden) {
       // Tab is hidden - start visibility timer
       clearTimers();
       visibilityTimer = setTimeout(() => {
         handleAutoLogout('tab_hidden');
-      }, INACTIVITY_TIMEOUT);
+      }, AUTO_LOGOUT_CONFIG.INACTIVITY_TIMEOUT);
     } else {
       // Tab is visible again - restart inactivity timer
-      clearTimers();
       resetInactivityTimer();
     }
   };
@@ -105,21 +103,20 @@ export const useAdminAutoLogout = () => {
    * Handle tab/window close
    */
   const handleBeforeUnload = () => {
-    // Trigger immediate logout on tab close
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(LOGOUT_EVENT_KEY, Date.now().toString());
-    }
-    signOut();
+    if (!authStore.isAuthenticated) return;
+
+    // Broadcast logout to other tabs
+    safeLocalStorage.setItem(AUTO_LOGOUT_CONFIG.LOGOUT_EVENT_KEY, Date.now().toString());
   };
 
   /**
    * Listen for logout events from other tabs
    */
   const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === LOGOUT_EVENT_KEY) {
+    if (e.key === AUTO_LOGOUT_CONFIG.LOGOUT_EVENT_KEY) {
       // Another tab triggered logout
       clearTimers();
-      signOut();
+      authStore.signOut();
     }
   };
 
@@ -127,12 +124,8 @@ export const useAdminAutoLogout = () => {
    * Setup event listeners
    */
   const setupListeners = () => {
-    if (typeof window === 'undefined') return;
-
     // Activity events
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-
-    activityEvents.forEach((event) => {
+    AUTO_LOGOUT_CONFIG.ACTIVITY_EVENTS.forEach((event) => {
       window.addEventListener(event, resetInactivityTimer, true);
     });
 
@@ -145,21 +138,19 @@ export const useAdminAutoLogout = () => {
     // Cross-tab logout synchronization
     window.addEventListener('storage', handleStorageChange);
 
-    // Start initial timer
-    resetInactivityTimer();
+    // Start initial timer if authenticated
+    if (authStore.isAuthenticated) {
+      resetInactivityTimer();
+    }
   };
 
   /**
    * Cleanup event listeners
    */
   const cleanup = () => {
-    if (typeof window === 'undefined') return;
-
     clearTimers();
 
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-
-    activityEvents.forEach((event) => {
+    AUTO_LOGOUT_CONFIG.ACTIVITY_EVENTS.forEach((event) => {
       window.removeEventListener(event, resetInactivityTimer, true);
     });
 
@@ -168,17 +159,20 @@ export const useAdminAutoLogout = () => {
     window.removeEventListener('storage', handleStorageChange);
   };
 
-  // Lifecycle hooks
-  onMounted(() => {
-    setupListeners();
-  });
+  // Setup listeners on plugin initialization
+  setupListeners();
 
-  onUnmounted(() => {
-    cleanup();
-  });
+  // Cleanup on app unmount (rare, but good practice)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', cleanup);
+  }
 
   return {
-    cleanup,
-    resetInactivityTimer,
+    provide: {
+      authAutoLogout: {
+        reset: resetInactivityTimer,
+        cleanup,
+      },
+    },
   };
-};
+});
