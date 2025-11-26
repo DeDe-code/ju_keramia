@@ -167,7 +167,7 @@ onMounted(() => {
     </div>
     <div v-else>
       <div
-        class="flex justify-between items-center mb-ceramic-lg px-ceramic-lg sm:px-ceramic-xl lg:px-ceramic-3xl py-ceramic-lg border-2"
+        class="flex justify-between items-center mb-ceramic-lg px-ceramic-lg sm:px-ceramic-xl lg:px-ceramic-3xl py-ceramic-lg"
       >
         <h2 class="font-ceramic-display text-ceramic-2xl text-clay-800">Admin Dashboard</h2>
         <UButton class="text-ceramic-error border-2 border-ceramic-error" @click="signOut">
