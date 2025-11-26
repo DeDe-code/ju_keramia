@@ -667,31 +667,1243 @@ const items = ref<NavigationMenuItem[][]>([[{ label: 'Shop', to: '/shop' }]]);
 - **Target Audience**: Customers seeking unique, handcrafted ceramic pieces
 - **Brand Values**: Craftsmanship, natural materials, timeless design
 
-## State Management Patterns
+## Admin Dashboard System
 
-### Pinia Store Structure
+The project includes a full-featured admin dashboard for managing products and hero images.
 
-```typescript
-// stores/cart.ts
-export const useCartStore = defineStore('cart', () => {
-  const items = ref<CartItem[]>([]);
-  const total = computed(() =>
-    items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  );
+### Admin Components
 
-  const addItem = (item: CartItem) => {
-    // Implementation
-  };
+#### AdminDashboardContent
 
-  return { items, total, addItem };
-});
+Main admin dashboard wrapper component that renders the admin navigation.
+
+**Usage:**
+
+```vue
+<AdminDashboardContent />
 ```
 
-### Store Naming
+#### AdminNavigation
 
-- **Files**: Use kebab-case (e.g., `cart.ts`, `user-preferences.ts`)
+Navigation menu for switching between admin sections (Hero Images and Products).
+
+**Navigation Items:**
+
+- **Hero Images**: Manage landing and about page hero images (`/admin/hero-images`)
+- **Products**: Manage product catalog and images (`/admin/products`)
+
+**Usage:**
+
+```vue
+<AdminNavigation />
+```
+
+#### AdminPhotoManager
+
+Navigation wrapper for hero image management pages with vertical menu and slot for content.
+
+**Features:**
+
+- Displays hero image navigation sidebar
+- Provides slot for page-specific content
+- Shows page title and recommendations
+
+**Usage:**
+
+```vue
+<AdminPhotoManager>
+  <AdminHeroImageContent :image="landingImage" page-type="landing" />
+</AdminPhotoManager>
+```
+
+#### AdminHeroImageCard
+
+Displays hero image metadata with loading/empty states.
+
+**Props:**
+
+- `image`: Hero image data (HeroImage | null)
+- `pageLabel`: Display label for the page (string)
+- `loading`: Loading state (boolean)
+
+**Slots:**
+
+- `actions`: Card header actions
+- `footer`: Card footer content
+
+**Displays:**
+
+- Image dimensions (width x height)
+- File size (formatted)
+- Last updated timestamp
+
+**Usage:**
+
+```vue
+<AdminHeroImageCard :image="landingImage" page-label="Landing" :loading="false">
+  <template #actions>
+    <UButton>Refresh</UButton>
+  </template>
+</AdminHeroImageCard>
+```
+
+#### AdminHeroImageContent
+
+Container combining metadata card and image uploader. Delegates upload events to parent.
+
+**Props:**
+
+- `image`: Hero image data (HeroImage | null)
+- `pageType`: Page type identifier (HeroImagePageType)
+- `pageLabel`: Display label (string)
+- `loading`: Loading state (boolean)
+
+**Events:**
+
+- `uploadSuccess`: Emitted after successful upload
+- `uploadError`: Emitted on upload failure
+
+**Usage:**
+
+```vue
+<AdminHeroImageContent
+  :image="aboutImage"
+  page-type="about"
+  page-label="About"
+  @upload-success="handleSuccess"
+  @upload-error="handleError"
+/>
+```
+
+#### AdminImageUploader
+
+Full-featured image upload component with drag-and-drop, preview, validation, and progress tracking.
+
+**Props:**
+
+- `imageType`: 'hero' | 'product'
+- `subType`: Hero page type or product slug (string)
+- `maxSizeMB`: Maximum file size in MB (number, default: 5)
+- `requiredWidth`: Target image width (number)
+- `requiredHeight`: Target image height (number)
+- `acceptedFormats`: Allowed MIME types (string[], default: jpeg, png, webp)
+- `currentImageUrl`: URL of existing image (string)
+
+**Events:**
+
+- `uploadSuccess`: Returns upload result with publicUrl, key, dimensions, fileSize
+- `uploadError`: Returns error message
+
+**Features:**
+
+- Drag-and-drop support
+- Image preview
+- Client-side validation
+- Progress tracking
+- Cloudflare R2 upload via presigned URLs
+- WebP conversion and compression
+
+**Usage:**
+
+```vue
+<AdminImageUploader
+  image-type="hero"
+  sub-type="landing"
+  :max-size-m-b="10"
+  :required-width="1920"
+  :required-height="1080"
+  @upload-success="handleUploadSuccess"
+  @upload-error="handleUploadError"
+/>
+```
+
+#### AdminProductForm
+
+Comprehensive form for creating/editing ceramic products.
+
+**Props:**
+
+- `product`: Existing product data (ProductFormData)
+- `mode`: 'create' | 'edit' (default: 'create')
+
+**Events:**
+
+- `submit`: Emits validated ProductFormData
+- `cancel`: User cancelled form
+
+**Form Fields:**
+
+- **Basic Info**: Name, slug (auto-generated), description, price, category
+- **Images**: Up to 3 product images with preview
+- **Dimensions**: Height, width, depth (in cm)
+- **Materials**: Multi-select dropdown
+- **Status**: In stock toggle, featured toggle
+
+**Validation:**
+
+- Required: name, slug, price, category, at least one image
+- Auto-generates slug from product name
+- Price must be > 0
+- Image validation (format, size)
+
+**Usage:**
+
+```vue
+<AdminProductForm
+  :product="existingProduct"
+  mode="edit"
+  @submit="handleSubmit"
+  @cancel="handleCancel"
+/>
+```
+
+#### AdminProductsProductCard
+
+Product card displaying image, info, and action buttons.
+
+**Props:**
+
+- `product`: Product data with id, name, category, price, images, featured, in_stock
+- `selected`: Selection state (boolean)
+
+**Events:**
+
+- `toggleSelection`: Toggle product selection
+- `edit`: Edit product (passes product object)
+- `delete`: Delete product (passes product id)
+
+**Features:**
+
+- Product image with fallback
+- Featured badge
+- Out of stock badge
+- Selection checkbox
+- Edit and delete buttons
+
+**Usage:**
+
+```vue
+<AdminProductsProductCard
+  :product="product"
+  :selected="isSelected"
+  @edit="handleEdit"
+  @delete="handleDelete"
+  @toggle-selection="toggleSelection"
+/>
+```
+
+#### AdminProductsProductCatalogHeader
+
+Header showing product count, selection status, and create button.
+
+**Props:**
+
+- `products`: Array of products
+- `selectedProductIds`: Array of selected IDs
+
+**Events:**
+
+- `create`: Create new product
+
+**Usage:**
+
+```vue
+<AdminProductsProductCatalogHeader
+  :products="products"
+  :selected-product-ids="selectedIds"
+  @create="handleCreate"
+/>
+```
+
+#### AdminProductsBulkActions
+
+Bulk deletion buttons for selected products or all products.
+
+**Props:**
+
+- `selectedProductIds`: Array of selected product IDs
+
+**Events:**
+
+- `clearSelection`: Clear selection after deletion
+- `refresh`: Refresh product list
+
+**Actions:**
+
+- **Delete All Products**: With double confirmation
+- **Delete Selected**: Only enabled when products are selected
+
+**Usage:**
+
+```vue
+<AdminProductsBulkActions
+  :selected-product-ids="selectedIds"
+  @clear-selection="clearSelection"
+  @refresh="refreshProducts"
+/>
+```
+
+#### AdminProductsCreateNewProduct
+
+Empty state component shown when no products exist.
+
+**Events:**
+
+- `create`: User clicked create button
+
+**Usage:**
+
+```vue
+<AdminProductsCreateNewProduct @create="handleCreate" />
+```
+
+### Common Components
+
+#### CommonImageUploadDropzone
+
+Drag-and-drop zone with upload instructions.
+
+**Props:**
+
+- `isDragging`: Dragging state (boolean)
+- `acceptedFormats`: Allowed formats (string[])
+- `maxSizeMB`: Max file size (number)
+- `requiredWidth`: Target width (number)
+- `requiredHeight`: Target height (number)
+
+**Events:**
+
+- Standard drag events (dragover, dragleave, drop)
+- `click`: User clicked dropzone
+
+#### CommonUploadProgressBar
+
+Progress bar for upload operations.
+
+**Props:**
+
+- `progress`: Progress percentage (0-100)
+
+**Features:**
+
+- Animated progress bar
+- Percentage display
+- Ceramic styling
+
+**Usage:**
+
+```vue
+<CommonUploadProgressBar :progress="uploadProgress" />
+```
+
+## Composables Library
+
+### useImageUpload
+
+Core composable for uploading images to Cloudflare R2 with compression and validation.
+
+**Features:**
+
+- Client-side image compression and WebP conversion
+- Direct upload to R2 via presigned URLs
+- Progress tracking
+- Dimension validation
+- Metadata storage in Supabase
+
+**Usage:**
+
+```typescript
+const { uploadImage, progress, isUploading, error } = useImageUpload();
+
+const result = await uploadImage(
+  file,
+  'hero', // or 'product'
+  'landing', // subType
+  {
+    maxWidth: 1920,
+    maxHeight: 1080,
+    quality: 0.85,
+  }
+);
+
+// result: { publicUrl, key, width, height, fileSize, originalFileSize }
+```
+
+**Methods:**
+
+- `uploadImage(file, imageType, subType, options)`: Upload and compress image
+- `compressImage(file, maxWidth, maxHeight, quality)`: Compress to WebP
+- `reset()`: Reset state
+- `formatFileSize(bytes)`: Format bytes to KB/MB
+
+### useImageUploaderLogic
+
+Business logic for image uploader component with validation and file selection.
+
+**Usage:**
+
+```typescript
+const {
+  isDragging,
+  previewUrl,
+  selectedFile,
+  validationError,
+  progress,
+  isUploading,
+  handleDragOver,
+  handleDrop,
+  handleUpload,
+  clearSelection,
+} = useImageUploaderLogic(props, emit);
+```
+
+**Methods:**
+
+- `validateFile(file)`: Validate file before upload
+- `handleFileSelect(file)`: Process selected file
+- `handleDragOver/Leave/Drop`: Drag-and-drop handlers
+- `handleInputChange`: File input change handler
+- `triggerFileInput()`: Programmatically open file dialog
+- `handleUpload()`: Upload selected file
+- `clearSelection()`: Clear selected file
+
+### useHeroImages
+
+Hero images data management with 5-minute smart caching.
+
+**Features:**
+
+- Fetches hero images from Supabase
+- 5-minute cache to reduce API calls
+- Force refresh after uploads
+- Computed getters for landing/about images
+
+**Usage:**
+
+```typescript
+const { landingImage, aboutImage, loading, fetchHeroImages, refreshImages } = useHeroImages({
+  onError: (err) => toast.error(err),
+  onSuccess: (msg) => toast.success(msg),
+});
+
+await fetchHeroImages(); // Uses cache if fresh
+await refreshImages(); // Force refresh after upload
+```
+
+**Methods:**
+
+- `fetchHeroImages(force)`: Fetch with caching
+- `refreshImages()`: Force refresh
+- `invalidate()`: Clear cache and refetch
+- `getImage(pageType)`: Get specific image
+- `clear()`: Clear all state
+
+### useProductList
+
+Fetch and manage product list from Supabase.
+
+**Usage:**
+
+```typescript
+const { products, loading, fetchProducts, refreshProducts } = useProductList();
+
+await fetchProducts();
+```
+
+**State:**
+
+- `products`: Array of ProductRow
+- `loading`: Fetch loading state
+
+### useProductMutations
+
+CRUD operations for products (Create, Update, Delete).
+
+**Usage:**
+
+```typescript
+const { createProduct, updateProduct, deleteProduct } = useProductMutations();
+
+await createProduct(productData);
+await updateProduct(productId, productData);
+await deleteProduct(productId);
+```
+
+**Features:**
+
+- Toast notifications for success/error
+- Automatic Supabase sync
+- Confirmation dialogs for delete
+
+### useProductDeletion
+
+Bulk product deletion with confirmations.
+
+**Usage:**
+
+```typescript
+const { deleteAllProducts, deleteSelectedProducts } = useProductDeletion();
+
+await deleteAllProducts(); // Double confirmation
+await deleteSelectedProducts([id1, id2]);
+```
+
+### useNotifications
+
+Centralized toast notification system with predefined patterns.
+
+**Usage:**
+
+```typescript
+const {
+  notifySuccess,
+  notifyError,
+  notifyInfo,
+  notifyWarning,
+  notifyUploadSuccess,
+  notifyUploadError,
+  notifyFetchError,
+} = useNotifications();
+
+notifySuccess('Product Created', 'Your product was added successfully');
+notifyUploadSuccess('landing');
+notifyFetchError('Products', 'Failed to load products');
+```
+
+### useCaptcha
+
+Clean hCaptcha integration for Nuxt 3.
+
+**Features:**
+
+- SSR-compatible
+- Explicit rendering
+- TypeScript support
+- Simple API
+
+**Usage:**
+
+```typescript
+const { token, render, reset, isLoaded } = useCaptcha();
+
+await render('h-captcha-container', {
+  sitekey: hcaptcha.siteKey,
+  theme: 'light',
+  size: 'normal',
+});
+
+// After form submission
+reset();
+```
+
+### useContactFormValidation
+
+Contact form validation, state management, and submission with hCaptcha.
+
+**Usage:**
+
+```typescript
+const {
+  form,
+  loading,
+  submitted,
+  submitError,
+  schema,
+  hcaptcha,
+  handleSubmit,
+  resetForm,
+  initializeCaptcha,
+} = useContactFormValidation();
+
+onMounted(() => initializeCaptcha());
+```
+
+**Features:**
+
+- Zod/Valibot validation via shared schema
+- hCaptcha integration and verification
+- Auto-reset after 5 seconds on success
+- Error handling with user-friendly messages
+
+### useSupabase
+
+Singleton Supabase client with TypeScript typing.
+
+**Usage:**
+
+```typescript
+const supabase = useSupabase();
+
+const { data, error } = await supabase.from('products').select('*');
+```
+
+**Features:**
+
+- Typed client with Database schema
+- Singleton pattern (one instance)
+- Auto-configured from environment
+
+## State Management Patterns
+
+### Auth Store (Pinia)
+
+Secure admin authentication with HttpOnly cookies and Supabase.
+
+**Location:** `stores/auth.ts`
+
+**Features:**
+
+- HttpOnly cookies for token storage (XSS-protected)
+- SSR-compatible authentication state
+- Auto-logout on inactivity (handled by client plugin)
+- Minimal localStorage (non-sensitive data only)
+
+**State:**
+
+```typescript
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  lastActivity: number;
+  isTabVisible: boolean;
+  isLoading: boolean;
+}
+```
+
+**Getters:**
+
+- `currentUser`: Get sanitized user
+- `isLoggedIn`: Check authentication status
+- `userEmail`: Get user email
+- `timeSinceActivity`: Time since last activity
+- `isSessionExpiring`: Check if session about to expire
+
+**Actions:**
+
+- `signIn(credentials)`: Login with email/password
+- `signOut()`: Logout and clear cookies
+- `resetPassword(email)`: Send password reset email
+- `resetActivity()`: Update last activity timestamp
+- `setTabVisibility(isVisible)`: Track tab visibility
+- `hydrateFromServer(user, isAuthenticated)`: SSR hydration
+
+**Usage:**
+
+```typescript
+const authStore = useAuthStore();
+
+// Sign in
+const result = await authStore.signIn({
+  email: 'admin@example.com',
+  password: 'password123',
+});
+
+if (result.success) {
+  // Navigate to dashboard
+}
+
+// Sign out
+await authStore.signOut();
+
+// Check auth status
+if (authStore.isLoggedIn) {
+  console.log('User:', authStore.currentUser);
+}
+```
+
+### Store Persistence
+
+Auth store uses Pinia persistence plugin but only persists non-sensitive data:
+
+- ✅ `lastActivity` timestamp
+- ❌ Tokens (stored in HttpOnly cookies)
+- ❌ Sensitive user data
+
+### Store Naming Conventions
+
+- **Files**: Use kebab-case (e.g., `auth.ts`, `user-preferences.ts`)
 - **Store IDs**: Use kebab-case matching filename
 - **Composables**: Use `use*Store` pattern for consistency
+
+## API Routes
+
+### Contact Form API
+
+**Endpoint:** `POST /api/contact`
+
+**Location:** `server/api/contact.post.ts`
+
+**Features:**
+
+- hCaptcha verification
+- Email validation
+- Resend email service integration
+- Rate limiting ready
+- HTML email templates
+
+**Request Body:**
+
+```typescript
+{
+  firstName: string;
+  lastName: string;
+  email: string;
+  message: string;
+  hcaptchaToken: string;
+}
+```
+
+**Response:**
+
+```typescript
+{
+  success: boolean;
+  message: string;
+  id?: string; // Resend email ID
+}
+```
+
+**Error Codes:**
+
+- `400`: Missing/invalid fields, captcha failed
+- `500`: Email service error
+
+### Admin Upload URL API
+
+**Endpoint:** `POST /api/admin/upload-url`
+
+**Location:** `server/api/admin/upload-url.post.ts`
+
+**Features:**
+
+- Generates presigned URLs for Cloudflare R2
+- S3-compatible API
+- File validation
+- Metadata tracking
+
+**Request Body:**
+
+```typescript
+{
+  fileName: string;
+  fileType: string; // MIME type
+  fileSize: number;
+  imageType: 'hero' | 'product';
+  subType?: string; // Hero page or product slug
+}
+```
+
+**Response:**
+
+```typescript
+{
+  uploadUrl: string; // Presigned URL for upload
+  publicUrl: string; // Public URL after upload
+  key: string; // R2 object key
+  expiresIn: number; // URL expiration (seconds)
+  bucket: string; // Bucket name
+}
+```
+
+**Image Storage Paths:**
+
+- Hero images: `hero/{page}-{timestamp}.webp`
+- Product images: `products/{slug}-{timestamp}.webp`
+
+### Authentication APIs
+
+#### Login
+
+**Endpoint:** `POST /api/auth/login`
+
+**Location:** `server/api/auth/login.post.ts`
+
+**Features:**
+
+- Supabase authentication
+- HttpOnly cookie management
+- Secure token storage
+
+**Request Body:**
+
+```typescript
+{
+  email: string;
+  password: string;
+}
+```
+
+**Response:**
+
+```typescript
+{
+  success: boolean;
+  user: User; // Sanitized user data
+}
+```
+
+**Security:**
+
+- Sets `ju_access_token` and `ju_refresh_token` HttpOnly cookies
+- SameSite=lax for CSRF protection
+- Secure flag in production
+
+#### Logout
+
+**Endpoint:** `POST /api/auth/logout`
+
+**Location:** `server/api/auth/logout.post.ts`
+
+**Features:**
+
+- Invalidates Supabase session
+- Clears auth cookies
+- Safe to call when not authenticated
+
+#### Get Current User
+
+**Endpoint:** `GET /api/auth/me`
+
+**Location:** `server/api/auth/me.get.ts`
+
+**Features:**
+
+- Validates session from cookies
+- Refreshes tokens if needed
+- Returns sanitized user data
+
+**Response:**
+
+```typescript
+{
+  user: User | null;
+  isAuthenticated: boolean;
+}
+```
+
+#### Reset Password
+
+**Endpoint:** `POST /api/auth/reset-password`
+
+**Location:** `server/api/auth/reset-password.post.ts`
+
+**Features:**
+
+- Sends password reset email via Supabase
+- Configurable redirect URL
+
+**Request Body:**
+
+```typescript
+{
+  email: string;
+}
+```
+
+## Middleware
+
+### Auth Middleware
+
+**File:** `middleware/auth.ts`
+
+**Purpose:** Protects admin routes from unauthenticated access
+
+**Usage:**
+
+```vue
+<script setup>
+definePageMeta({ middleware: 'auth' });
+</script>
+```
+
+**Behavior:**
+
+- Checks `authStore.isLoggedIn`
+- Redirects to `/admin` (login) if not authenticated
+- Applied to all admin dashboard pages
+
+### Guest Middleware
+
+**File:** `middleware/guest.ts`
+
+**Purpose:** Redirects authenticated users from login page
+
+**Usage:**
+
+```vue
+<script setup>
+definePageMeta({ middleware: 'guest' });
+</script>
+```
+
+**Behavior:**
+
+- Checks if user is already authenticated
+- Prevents access to login when already logged in
+- Applied to `/admin` login page
+
+## Shared Validation Schemas
+
+### Admin Login Schema
+
+**File:** `shared/adminLoginSchema.ts`
+
+**Validation Rules:**
+
+```typescript
+{
+  email: z.string().email().max(254),
+  password: z.string()
+    .min(8)
+    .max(100)
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/)
+}
+```
+
+**Requirements:**
+
+- Valid email format
+- Password 8-100 characters
+- One uppercase, lowercase, number, special character
+
+### Admin Password Reset Schema
+
+**File:** `shared/adminPasswordResetSchema.ts`
+
+**Validation Rules:**
+
+```typescript
+{
+  newPassword: z.string()
+    .min(8)
+    .max(100)
+    .regex(/[a-zA-Z]/) // Letter
+    .regex(/[0-9]/) // Number
+    .regex(/[A-Z]/) // Uppercase
+    .regex(/[\W_]/), // Special char
+  confirmPassword: z.string()
+}
+```
+
+**Custom Refinement:**
+
+- Passwords must match
+
+### Contact Form Schema
+
+**File:** `shared/contactFormSchema.ts`
+
+**Validation Rules:**
+
+```typescript
+{
+  firstName: z.string()
+    .min(2).max(50)
+    .regex(/^[a-zA-ZÀ-ÿ\s\-']+$/),
+  lastName: z.string()
+    .min(2).max(50)
+    .regex(/^[a-zA-ZÀ-ÿ\s\-']+$/),
+  email: z.string().email().max(254),
+  message: z.string().min(10).max(2000)
+}
+```
+
+**Custom Refinements:**
+
+- All fields required (no blank submissions)
+- Message cannot be only whitespace
+
+## Configuration Files
+
+### Hero Image Pages Config
+
+**File:** `config/heroImagePages.ts`
+
+**Purpose:** Centralized hero image page configuration
+
+**Types:**
+
+```typescript
+type HeroImagePageType = 'landing' | 'about';
+
+interface HeroImagePage {
+  id: HeroImagePageType;
+  label: string;
+  icon: string;
+  description: string;
+  path?: string;
+}
+```
+
+**Available Pages:**
+
+```typescript
+HERO_IMAGE_PAGES = [
+  {
+    id: 'landing',
+    label: 'Landing Page',
+    icon: 'i-heroicons-home',
+    description: 'Main homepage hero image',
+    path: '/admin/hero-images/landing',
+  },
+  {
+    id: 'about',
+    label: 'About Page',
+    icon: 'i-heroicons-information-circle',
+    description: 'About page hero image',
+    path: '/admin/hero-images/about',
+  },
+];
+```
+
+**Upload Requirements:**
+
+```typescript
+HERO_IMAGE_CONFIG = {
+  maxSizeMB: 10,
+  requiredWidth: 1920,
+  requiredHeight: 1080,
+  acceptedFormats: ['image/jpeg', 'image/png', 'image/webp'],
+  imageType: 'hero',
+};
+```
+
+**Utility Functions:**
+
+- `getHeroImagePage(id)`: Get page config by ID
+- `getHeroImagePageLabel(id)`: Get page label by ID
+
+## TypeScript Types
+
+### Admin Types
+
+**File:** `types/admin.ts`
+
+**Product Types:**
+
+```typescript
+// From Supabase schema
+export type ProductRow = Database['public']['Tables']['products']['Row'];
+export type ProductInsert = Database['public']['Tables']['products']['Insert'];
+export type ProductUpdate = Database['public']['Tables']['products']['Update'];
+
+// Form data
+export interface ProductFormData {
+  id?: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  images: string[];
+  category: string;
+  dimensions: { height: number; width: number; depth: number };
+  materials: string[];
+  in_stock: boolean;
+  featured: boolean;
+}
+```
+
+**Hero Image Types:**
+
+```typescript
+export type HeroImageRow = Database['public']['Tables']['hero_images']['Row'];
+export type HeroImageInsert = Database['public']['Tables']['hero_images']['Insert'];
+export type HeroImageUpdate = Database['public']['Tables']['hero_images']['Update'];
+```
+
+**Helper Functions:**
+
+```typescript
+// Convert ProductRow to ProductFormData
+productRowToFormData(product: ProductRow): ProductFormData;
+```
+
+### Supabase Database Types
+
+**File:** `types/supabase.ts`
+
+**Auto-generated** from Supabase schema, includes:
+
+- All table types (Row, Insert, Update)
+- JSON type definitions
+- Database structure
+- Helper type utilities
+
+**Tables:**
+
+- `products`: Ceramic product catalog
+- `orders`: Customer orders
+- `hero_images`: Page hero images
+
+## Admin Pages
+
+### Admin Dashboard Index
+
+**Route:** `/admin`
+
+**File:** `app/pages/admin/index.vue`
+
+**Layout:** `admin` (no header/footer)
+
+**Features:**
+
+- Login form with Zod validation
+- Password reset functionality
+- Auth state management
+- Auto-redirect after password reset
+- Dashboard content when authenticated
+
+**Components Used:**
+
+- `AdminDashboardContent`
+- `UForm`, `UInput`, `UButton` (Nuxt UI)
+
+### Admin Products Page
+
+**Route:** `/admin/products`
+
+**File:** `app/pages/admin/products.vue`
+
+**Layout:** `admin`
+
+**Middleware:** `auth`
+
+**Features:**
+
+- Product catalog grid view
+- Create/edit product modal
+- Bulk selection and deletion
+- Empty state handling
+- SSR data fetching
+
+**State Management:**
+
+- `useProductList`: Fetch products
+- `useProductMutations`: CRUD operations
+- Local selection tracking
+
+**Components Used:**
+
+- `AdminProductForm`
+- `AdminProductsProductCard`
+- `AdminProductsProductCatalogHeader`
+- `AdminProductsBulkActions`
+- `AdminProductsCreateNewProduct`
+
+### Admin Hero Images Pages
+
+#### Landing Page Hero
+
+**Route:** `/admin/hero-images/landing`
+
+**File:** `app/pages/admin/hero-images/landing.vue`
+
+**Layout:** `admin`
+
+**Middleware:** `auth`
+
+**Features:**
+
+- Landing page hero image management
+- Upload with preview
+- Metadata display
+- Smart caching (5-minute)
+
+**Components Used:**
+
+- `AdminPhotoManager`
+- `AdminHeroImageContent`
+
+#### About Page Hero
+
+**Route:** `/admin/hero-images/about`
+
+**File:** `app/pages/admin/hero-images/about.vue`
+
+**Layout:** `admin`
+
+**Middleware:** `auth`
+
+**Features:**
+
+- About page hero image management
+- Same functionality as landing page
+- Independent image management
+
+**Components Used:**
+
+- `AdminPhotoManager`
+- `AdminHeroImageContent`
+
+## Server Utilities
+
+### Auth Helpers
+
+**File:** `server/utils/auth-helpers.ts`
+
+**Functions:**
+
+- `sanitizeUser(user)`: Remove sensitive data from user object
+- `clearAuthCookies(event)`: Clear all auth cookies
+- `AUTH_COOKIE_OPTIONS`: Shared cookie configuration
+
+**Cookie Options:**
+
+```typescript
+{
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  maxAge: 60 * 60 * 24 * 7, // 7 days
+  path: '/',
+}
+```
+
+### Auth Utils
+
+**File:** `server/utils/auth.ts`
+
+**Functions:**
+
+- `getSupabaseServer()`: Get server-side Supabase client
+- Server-side session management helpers
+
+## Client Plugins
+
+### Auth Auto-Logout Plugin
+
+**File:** `plugins/auth-auto-logout.client.ts`
+
+**Features:**
+
+- Monitors user activity (mouse, keyboard, scroll)
+- Auto-logout after 30 minutes inactivity
+- Tab visibility tracking
+- Cross-tab logout synchronization
+- LocalStorage event listeners
+
+**Configuration:**
+
+```typescript
+AUTO_LOGOUT_CONFIG = {
+  INACTIVITY_TIMEOUT: 30 * 60 * 1000, // 30 minutes
+  ACTIVITY_CHECK_INTERVAL: 60 * 1000, // 1 minute
+  LOGOUT_EVENT_KEY: 'ju_logout_event',
+};
+```
+
+### Auth SSR Plugin
+
+**File:** `plugins/auth-ssr.server.ts`
+
+**Purpose:** Hydrate auth state from server
+
+**Features:**
+
+- Reads HttpOnly cookies on server
+- Validates session with Supabase
+- Populates auth store before client hydration
+- Prevents auth flash/flicker
 
 ## Error Handling & Pages
 
