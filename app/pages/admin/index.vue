@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { adminLoginSchema } from '~~/shared/adminLoginSchema';
-import { useAdminAuth } from '~~/composables/useAdminAuth';
-import { useAdminAutoLogout } from '~~/composables/useAdminAutoLogout';
+import { useAuthStore } from '~~/stores/auth';
 
 // Use admin layout instead of default
 definePageMeta({
@@ -13,28 +12,79 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 
-// Use the admin authentication composable
-const { user, error, resetMessage, form, signIn, signOut, handleForgotPassword } = useAdminAuth();
-
-// Auto-logout composable (only active when user is logged in)
-const { cleanup } = useAdminAutoLogout();
+// Use the Pinia auth store
+const authStore = useAuthStore();
 
 // Schema for form validation
 const schema = adminLoginSchema;
 
+// Local form state
+const form = ref({
+  email: '',
+  password: '',
+});
+
+// Local error and message state
+const error = ref('');
+const resetMessage = ref('');
+
 // Message to display after password reset
 const passwordResetSuccess = ref(false);
 
-// Watch user state to manage auto-logout
-watch(
-  () => user.value,
-  (newUser) => {
-    if (!newUser) {
-      // User logged out - cleanup auto-logout listeners
-      cleanup();
-    }
+// Computed property for user
+const user = computed(() => authStore.user);
+
+/**
+ * Handle sign in
+ */
+const signIn = async () => {
+  error.value = '';
+  const result = await authStore.signIn({
+    email: form.value.email,
+    password: form.value.password,
+  });
+
+  if (result.success) {
+    // Clear form on success
+    form.value = { email: '', password: '' };
+  } else {
+    error.value = result.error || 'Login failed';
   }
-);
+};
+
+/**
+ * Handle sign out
+ */
+const signOut = async () => {
+  await authStore.signOut();
+};
+
+/**
+ * Handle forgot password
+ */
+const handleForgotPassword = async () => {
+  resetMessage.value = '';
+
+  if (!form.value.email) {
+    resetMessage.value = 'Please enter your email above first.';
+    setTimeout(() => {
+      resetMessage.value = '';
+    }, 5000);
+    return;
+  }
+
+  const result = await authStore.resetPassword(form.value.email);
+
+  if (result.success) {
+    resetMessage.value = 'Password reset email sent. Please check your inbox.';
+  } else {
+    resetMessage.value = result.error || 'Failed to send reset email';
+  }
+
+  setTimeout(() => {
+    resetMessage.value = '';
+  }, 5000);
+};
 
 onMounted(() => {
   // Check if user was redirected after password reset

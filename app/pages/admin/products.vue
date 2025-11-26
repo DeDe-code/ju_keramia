@@ -2,17 +2,15 @@
 import { ref } from 'vue';
 import { useProductList } from '~~/composables/useProductList';
 import { useProductMutations } from '~~/composables/useProductMutations';
-import { useAdminAutoLogout } from '~~/composables/useAdminAutoLogout';
 import type { ProductRow, ProductFormData } from '~~/types/admin';
 import { productRowToFormData } from '~~/types/admin';
 
-// Use admin layout (no header/footer)
+// Use admin layout (no header/footer) with auth middleware
 definePageMeta({
   layout: 'admin',
+  // @ts-expect-error - Nuxt auto-imports middleware from middleware/ directory
+  middleware: 'auth',
 });
-
-// Auto-logout for security
-useAdminAutoLogout();
 
 // Composables
 const { products, loading, fetchProducts } = useProductList();
