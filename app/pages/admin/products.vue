@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useProductList } from '~~/composables/useProductList';
 import { useProductMutations } from '~~/composables/useProductMutations';
+import { useAdminAutoLogout } from '~~/composables/useAdminAutoLogout';
 import type { ProductRow, ProductFormData } from '~~/types/admin';
 import { productRowToFormData } from '~~/types/admin';
 
@@ -10,6 +11,9 @@ definePageMeta({
   layout: 'admin',
   middleware: 'auth', // Protect this route
 });
+
+// Auto-logout for security
+useAdminAutoLogout();
 
 // Composables
 const { products, loading, fetchProducts } = useProductList();

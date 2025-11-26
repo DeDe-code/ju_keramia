@@ -15,6 +15,9 @@ const router = useRouter();
 // Use the Pinia auth store
 const authStore = useAuthStore();
 
+// Auto-logout composable (only active when user is logged in)
+const { cleanup } = useAdminAutoLogout();
+
 // Schema for form validation
 const schema = adminLoginSchema;
 
