@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useProductList } from '~~/composables/useProductList';
-import { useProductMutations } from '~~/composables/useProductMutations';
+import { useProductsStore } from '~~/stores/products';
 import type { ProductRow, ProductFormData } from '~~/types/admin';
 import { productRowToFormData } from '~~/types/admin';
 
@@ -12,28 +11,21 @@ definePageMeta({
   middleware: 'auth',
 });
 
-// Composables
-const { products, loading, fetchProducts } = useProductList();
-const { createProduct, updateProduct, deleteProduct } = useProductMutations();
+// Products store
+const productsStore = useProductsStore();
 
 // State
 const showProductForm = ref(false);
 const editingProduct = ref<ProductFormData | undefined>(undefined);
-const selectedProductIds = ref<string[]>([]);
 
 // Fetch products during SSR (prevents hydration mismatch)
-await fetchProducts();
+await productsStore.fetchProducts();
 
 /**
  * Toggle product selection
  */
 const toggleProductSelection = (productId: string) => {
-  const index = selectedProductIds.value.indexOf(productId);
-  if (index > -1) {
-    selectedProductIds.value.splice(index, 1);
-  } else {
-    selectedProductIds.value.push(productId);
-  }
+  productsStore.toggleSelection(productId);
 };
 
 /** Show create product form **/
@@ -59,15 +51,14 @@ const handleProductSubmit = async (product: ProductFormData) => {
 
   if (editingProduct.value?.id) {
     // Update existing product
-    success = await updateProduct(editingProduct.value.id, product);
+    success = await productsStore.updateProduct(editingProduct.value.id, product);
   } else {
     // Create new product
-    success = await createProduct(product);
+    success = await productsStore.createProduct(product);
   }
 
   if (success) {
-    // Refresh products and close form
-    await fetchProducts();
+    // Close form
     showProductForm.value = false;
     editingProduct.value = undefined;
   }
@@ -85,10 +76,7 @@ const handleProductCancel = () => {
  * Handle product delete
  */
 const handleDeleteProduct = async (productId: string) => {
-  const success = await deleteProduct(productId);
-  if (success) {
-    await fetchProducts();
-  }
+  await productsStore.deleteProduct(productId);
 };
 </script>
 
@@ -108,19 +96,19 @@ const handleDeleteProduct = async (productId: string) => {
     <div v-else>
       <!-- Header -->
       <AdminProductsProductCatalogHeader
-        :products="products"
-        :selected-product-ids="selectedProductIds"
+        :products="productsStore.products"
+        :selected-product-ids="productsStore.selectedIds"
         @create="handleCreateProduct"
       />
 
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center py-ceramic-xl">
+      <div v-if="productsStore.loading" class="flex justify-center py-ceramic-xl">
         <UIcon name="i-heroicons-arrow-path" class="!text-ceramic-3xl text-clay-600 animate-spin" />
       </div>
 
       <!-- Empty State -->
       <div
-        v-else-if="products.length === 0"
+        v-else-if="productsStore.products.length === 0"
         class="flex flex-col items-center justify-center py-ceramic-xl px-ceramic-md bg-cream-25 border-2 border-dashed border-stone-300 rounded-ceramic-lg"
       >
         <AdminProductsCreateNewProduct @create="handleCreateProduct" />
@@ -130,13 +118,13 @@ const handleDeleteProduct = async (productId: string) => {
       <div v-else>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-ceramic-md">
           <AdminProductsProductCard
-            v-for="product in products"
+            v-for="product in productsStore.products"
             :key="product.id"
             :product="{
               ...product,
               images: product.images ?? undefined,
             }"
-            :selected="selectedProductIds.includes(product.id)"
+            :selected="productsStore.isSelected(product.id)"
             @edit="handleEditProduct"
             @delete="handleDeleteProduct"
             @toggle-selection="toggleProductSelection"
@@ -146,8 +134,8 @@ const handleDeleteProduct = async (productId: string) => {
         <!-- Bulk Actions -->
         <div class="flex gap-ceramic-sm mt-ceramic-lg">
           <AdminProductsBulkActions
-            v-if="selectedProductIds.length > 0"
-            :selected-product-ids="selectedProductIds"
+            v-if="productsStore.hasSelection"
+            :selected-product-ids="productsStore.selectedIds"
           />
         </div>
       </div>
