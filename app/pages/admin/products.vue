@@ -5,9 +5,11 @@ import type { ProductRow, ProductFormData } from '~~/types/admin';
 import { productRowToFormData } from '~~/types/admin';
 import { useAuthStore } from '~~/stores/auth';
 
-// Use admin layout (no header/footer)
+// Use admin layout (no header/footer) with auth middleware
 definePageMeta({
   layout: 'admin',
+  // @ts-expect-error - Nuxt auto-imports middleware from middleware/ directory
+  middleware: 'auth',
 });
 
 // Auth check
