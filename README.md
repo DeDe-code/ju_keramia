@@ -108,9 +108,6 @@ ju_keramia/
 │   └── useNotifications.ts           # Toast notifications
 ├── config/
 │   └── heroImagePages.ts             # Hero image configuration
-├── middleware/
-│   ├── auth.ts                       # Protected route middleware
-│   └── guest.ts                      # Login page middleware
 ├── plugins/
 │   ├── auth-auto-logout.client.ts    # Activity tracking
 │   └── auth-ssr.server.ts            # SSR auth hydration

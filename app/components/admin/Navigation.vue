@@ -12,7 +12,7 @@ const items = ref<NavigationMenuItem[][]>([
       label: 'Hero Images',
       icon: 'i-heroicons-photo',
       description: 'Manage landing and about page hero images',
-      to: '/admin/hero-images',
+      to: '/admin/hero-images/landing',
     },
     {
       name: 'products',

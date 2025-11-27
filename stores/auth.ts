@@ -186,8 +186,11 @@ export const useAuthStore = defineStore('auth', {
 
   /**
    * Persistence configuration
-   * ONLY persist non-sensitive data (lastActivity timestamp)
-   * DO NOT persist tokens - they are in HttpOnly cookies
+   * Persist auth state for navigation between admin pages
+   * Tokens remain in HttpOnly cookies (server-managed)
+   * This prevents API calls on every route change while maintaining security
    */
-  persist: true,
+  persist: {
+    pick: ['user', 'isAuthenticated', 'lastActivity'],
+  },
 });

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { useHeroImages } from '~~/composables/useHeroImages';
+import { useHeroImagesStore } from '~~/stores/heroImages';
 import { useNotifications } from '~~/composables/useNotifications';
 import { HERO_IMAGE_CONFIG } from '~~/config/heroImagePages';
+import { useAuthStore } from '~~/stores/auth';
 
 /**
  * About Page Hero Image Management
@@ -9,20 +10,22 @@ import { HERO_IMAGE_CONFIG } from '~~/config/heroImagePages';
 
 definePageMeta({
   layout: 'admin',
-  // @ts-expect-error - Nuxt auto-imports middleware from middleware/ directory
-  middleware: 'auth',
 });
 
-const { notifyUploadSuccess, notifyUploadError, notifyFetchError } = useNotifications();
-const { getImage, loading, error, fetchHeroImages, refreshImages } = useHeroImages({
-  onError: (err) => notifyFetchError('Hero Images', err),
-});
+// Auth check
+const authStore = useAuthStore();
+if (import.meta.client && !authStore.isLoggedIn) {
+  await navigateTo('/admin');
+}
 
-const aboutImage = computed(() => getImage('about'));
+const { notifyUploadSuccess, notifyUploadError } = useNotifications();
+const heroImagesStore = useHeroImagesStore();
+
+const aboutImage = computed(() => heroImagesStore.aboutImage);
 
 const handleUploadSuccess = async () => {
   notifyUploadSuccess('about');
-  await refreshImages();
+  await heroImagesStore.refreshImages();
 };
 
 const handleUploadError = (errorMsg: string) => {
@@ -31,9 +34,9 @@ const handleUploadError = (errorMsg: string) => {
 
 onMounted(async () => {
   try {
-    await fetchHeroImages();
+    await heroImagesStore.fetchHeroImages();
   } catch {
-    // Error already handled by composable
+    // Error already handled by store
   }
 });
 </script>
@@ -53,13 +56,13 @@ onMounted(async () => {
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center py-ceramic-xl">
+      <div v-if="heroImagesStore.loading" class="flex justify-center py-ceramic-xl">
         <UIcon name="i-heroicons-arrow-path" class="!text-ceramic-3xl text-clay-600 animate-spin" />
       </div>
 
       <!-- Error State -->
       <div
-        v-else-if="error"
+        v-else-if="heroImagesStore.error"
         class="bg-red-50 border border-red-200 rounded-ceramic-md p-ceramic-md"
       >
         <p class="text-ceramic-base text-red-700 flex items-start gap-ceramic-xs">
@@ -67,12 +70,12 @@ onMounted(async () => {
             name="i-heroicons-exclamation-triangle"
             class="!text-ceramic-xl flex-shrink-0 mt-1"
           />
-          <span>{{ error }}</span>
+          <span>{{ heroImagesStore.error }}</span>
         </p>
         <UButton
           class="mt-ceramic-sm text-red-700 hover:text-red-800"
           variant="ghost"
-          @click="() => fetchHeroImages(true)"
+          @click="() => heroImagesStore.fetchHeroImages(true)"
         >
           Try Again
         </UButton>
@@ -84,7 +87,7 @@ onMounted(async () => {
           :image="aboutImage"
           page-type="about"
           page-label="About"
-          :loading="loading"
+          :loading="heroImagesStore.loading"
           @upload-success="handleUploadSuccess"
           @upload-error="handleUploadError"
         />

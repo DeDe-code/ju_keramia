@@ -1500,47 +1500,35 @@ Auth store uses Pinia persistence plugin but only persists non-sensitive data:
 }
 ```
 
-## Middleware
+## Authentication Pattern
 
-### Auth Middleware
-
-**File:** `middleware/auth.ts`
-
-**Purpose:** Protects admin routes from unauthenticated access
-
-**Usage:**
+Admin pages use **direct auth checks** in `<script setup>` instead of middleware:
 
 ```vue
-<script setup>
-definePageMeta({ middleware: 'auth' });
+<script setup lang="ts">
+import { useAuthStore } from '~~/stores/auth';
+
+// Auth check
+const authStore = useAuthStore();
+if (import.meta.client && !authStore.isLoggedIn) {
+  await navigateTo('/admin');
+}
 </script>
 ```
 
-**Behavior:**
+**Why not middleware?**
 
-- Checks `authStore.isLoggedIn`
-- Redirects to `/admin` (login) if not authenticated
-- Applied to all admin dashboard pages
+- Avoids Nuxt middleware type generation issues (`MiddlewareKey = never`)
+- More explicit and easier to debug
+- Direct control over auth flow
+- No TypeScript workarounds needed
 
-### Guest Middleware
+**Security:**
 
-**File:** `middleware/guest.ts`
-
-**Purpose:** Redirects authenticated users from login page
-
-**Usage:**
-
-```vue
-<script setup>
-definePageMeta({ middleware: 'guest' });
-</script>
-```
-
-**Behavior:**
-
-- Checks if user is already authenticated
-- Prevents access to login when already logged in
-- Applied to `/admin` login page
+- Auth state persisted in localStorage (user, isAuthenticated)
+- Tokens stored in HttpOnly cookies (server-managed)
+- Server validates all API requests via `/api/auth/me`
+- Database has Row Level Security policies
 
 ## Shared Validation Schemas
 
@@ -1766,8 +1754,6 @@ productRowToFormData(product: ProductRow): ProductFormData;
 
 **Layout:** `admin`
 
-**Middleware:** `auth`
-
 **Features:**
 
 - Product catalog grid view
@@ -1800,8 +1786,6 @@ productRowToFormData(product: ProductRow): ProductFormData;
 
 **Layout:** `admin`
 
-**Middleware:** `auth`
-
 **Features:**
 
 - Landing page hero image management
@@ -1821,8 +1805,6 @@ productRowToFormData(product: ProductRow): ProductFormData;
 **File:** `app/pages/admin/hero-images/about.vue`
 
 **Layout:** `admin`
-
-**Middleware:** `auth`
 
 **Features:**
 
