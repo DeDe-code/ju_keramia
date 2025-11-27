@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useProductsStore } from '~~/stores/products';
 import type { ProductRow, ProductFormData } from '~~/types/admin';
 import { productRowToFormData } from '~~/types/admin';
+import { useAuthStore } from '~~/stores/auth';
 
 // Use admin layout (no header/footer) with auth middleware
 definePageMeta({
@@ -10,6 +11,12 @@ definePageMeta({
   // @ts-expect-error - Nuxt auto-imports middleware from middleware/ directory
   middleware: 'auth',
 });
+
+// Auth check
+const authStore = useAuthStore();
+if (import.meta.client && !authStore.isLoggedIn) {
+  await navigateTo('/admin');
+}
 
 // Products store
 const productsStore = useProductsStore();
