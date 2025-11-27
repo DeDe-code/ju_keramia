@@ -10,6 +10,8 @@ import { useAuthStore } from '~~/stores/auth';
 
 definePageMeta({
   layout: 'admin',
+  // @ts-expect-error - Nuxt auto-imports middleware from middleware/ directory
+  middleware: 'auth',
 });
 
 // Auth check
