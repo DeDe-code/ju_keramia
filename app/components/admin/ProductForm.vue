@@ -61,73 +61,26 @@ const materialOptions = [
 const errors = ref<Record<string, string>>({});
 const isSubmitting = ref(false);
 const selectedFiles = ref<File[]>([]);
-const imagePreviewUrls = ref<string[]>([]);
-const fileInputRef = ref<HTMLInputElement | null>(null);
+
+// Computed value for materials to handle object/string conversion
+const selectedMaterials = computed({
+  get: () => {
+    // Convert string[] to object[] for USelectMenu
+    return form.value.materials
+      .map((material) => materialOptions.find((opt) => opt.value === material))
+      .filter(Boolean) as { label: string; value: string }[];
+  },
+  set: (value: { label: string; value: string }[]) => {
+    // Convert object[] back to string[] for storage
+    form.value.materials = value.map((item) => item.value);
+  },
+});
 
 const generateSlug = () => {
   form.value.slug = form.value.name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-};
-
-const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const files = Array.from(target.files || []);
-
-  if (files.length === 0) return;
-
-  if (files.length > 3) {
-    toast.add({
-      title: 'Too Many Files',
-      description: 'Please select a maximum of 3 images',
-      color: 'error',
-    });
-    return;
-  }
-
-  const validFiles: File[] = [];
-  const errors: string[] = [];
-
-  for (const file of files) {
-    if (!file.type.startsWith('image/')) {
-      errors.push(`${file.name} is not an image`);
-      continue;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      errors.push(`${file.name} exceeds 5MB`);
-      continue;
-    }
-
-    validFiles.push(file);
-  }
-
-  if (errors.length > 0) {
-    toast.add({
-      title: 'Invalid Files',
-      description: errors.join(', '),
-      color: 'error',
-    });
-  }
-
-  if (validFiles.length === 0) return;
-
-  selectedFiles.value = validFiles;
-  imagePreviewUrls.value = validFiles.map((file) => URL.createObjectURL(file));
-};
-
-const removeSelectedImage = (index: number) => {
-  if (imagePreviewUrls.value[index]) {
-    URL.revokeObjectURL(imagePreviewUrls.value[index]);
-  }
-
-  selectedFiles.value.splice(index, 1);
-  imagePreviewUrls.value.splice(index, 1);
-};
-
-const triggerFileInput = () => {
-  fileInputRef.value?.click();
 };
 
 const validateForm = (): boolean => {
@@ -150,6 +103,10 @@ const validateForm = (): boolean => {
 
   if (!hasExistingImages && !hasSelectedFiles) {
     errors.value.images = 'At least one product image is required';
+  }
+
+  if (selectedFiles.value.length > 3) {
+    errors.value.images = 'Maximum 3 images allowed';
   }
 
   if (!form.value.category) {
@@ -218,9 +175,7 @@ const handleSubmit = async () => {
 
     emit('submit', cleanedProduct);
 
-    imagePreviewUrls.value.forEach((url) => URL.revokeObjectURL(url));
     selectedFiles.value = [];
-    imagePreviewUrls.value = [];
   } catch (err) {
     toast.add({
       title: 'Error',
@@ -232,7 +187,7 @@ const handleSubmit = async () => {
 };
 
 const handleCancel = () => {
-  imagePreviewUrls.value.forEach((url) => URL.revokeObjectURL(url));
+  selectedFiles.value = [];
   emit('cancel');
 };
 
@@ -364,71 +319,29 @@ const hasAtLeastOneImage = computed(() => {
           uploaded when you submit the form.
         </p>
 
-        <!-- File Input (Hidden) -->
-        <UFormField name="productImages">
-          <UInput
-            ref="fileInputRef"
-            type="file"
-            accept="image/*"
-            multiple
-            class="hidden"
-            @change="handleFileSelect"
-          />
-        </UFormField>
-
-        <!-- Upload Button -->
-        <div class="flex items-center gap-ceramic-md">
-          <UButton
-            type="button"
-            size="lg"
-            variant="outline"
-            class="border-stone-300 text-clay-700 hover:bg-stone-100"
-            :disabled="selectedFiles.length >= 3"
-            @click="triggerFileInput"
-          >
-            <UIcon name="i-heroicons-photo" class="!text-ceramic-lg mr-ceramic-xs" />
-            {{
-              selectedFiles.length === 0 ? 'Select Images' : `Selected: ${selectedFiles.length}/3`
-            }}
-          </UButton>
-          <span class="text-ceramic-xs text-stone-500">
-            {{
-              selectedFiles.length === 0
-                ? 'No images selected'
-                : `${selectedFiles.length} image(s) ready to upload`
-            }}
-          </span>
-        </div>
-
-        <!-- Image Previews -->
-        <div
-          v-if="imagePreviewUrls.length > 0"
-          class="grid grid-cols-1 md:grid-cols-3 gap-ceramic-md mt-ceramic-md"
+        <!-- File Upload Component -->
+        <UFileUpload
+          v-model="selectedFiles"
+          multiple
+          accept="image/*"
+          :disabled="selectedFiles.length >= 3"
+          variant="area"
+          layout="list"
+          label="Drop images here or click to upload"
+          description="PNG, JPG, WEBP up to 5MB • Maximum 3 images"
+          icon="i-heroicons-photo"
+          class="w-full"
         >
-          <div v-for="(previewUrl, index) in imagePreviewUrls" :key="index" class="relative group">
-            <NuxtImg
-              :src="previewUrl"
-              :alt="`Preview ${index + 1}`"
-              class="w-full h-48 object-cover rounded-ceramic-md border-2 border-stone-200"
-              loading="lazy"
-            />
-            <div class="absolute top-2 right-2">
-              <UButton
-                size="xs"
-                variant="solid"
-                class="bg-red-600 hover:bg-red-700 text-white"
-                @click="removeSelectedImage(index)"
-              >
-                <UIcon name="i-heroicons-x-mark" class="!text-ceramic-base" />
-              </UButton>
-            </div>
-            <div
-              class="absolute bottom-2 left-2 bg-clay-800/80 text-cream-25 px-2 py-1 rounded text-ceramic-xs"
-            >
-              Image {{ index + 1 }}
-            </div>
-          </div>
-        </div>
+          <template #files-bottom>
+            <p class="text-ceramic-xs text-stone-500 mt-ceramic-xs px-ceramic-lg">
+              {{ selectedFiles.length }}/3 images selected
+            </p>
+          </template>
+        </UFileUpload>
+
+        <p v-if="errors.images" class="text-ceramic-sm text-red-600 mt-ceramic-xs">
+          {{ errors.images }}
+        </p>
 
         <!-- Existing Images (Edit Mode) -->
         <div v-if="form.images.length > 0 && mode === 'edit'" class="mt-ceramic-md">
@@ -522,15 +435,15 @@ const hasAtLeastOneImage = computed(() => {
             Materials
           </label>
           <USelectMenu
-            v-model="form.materials"
+            v-model="selectedMaterials"
             :items="materialOptions"
-            value-key="value"
             multiple
             size="lg"
+            placeholder="Select materials..."
             class="w-full"
           />
           <p class="text-ceramic-xs text-stone-500 mt-ceramic-xs">
-            Hold Ctrl/Cmd to select multiple materials
+            Select one or more materials for this product
           </p>
         </div>
 

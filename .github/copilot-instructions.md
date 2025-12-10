@@ -1196,6 +1196,40 @@ await render('h-captcha-container', {
 reset();
 ```
 
+### usePasswordLeakCheck
+
+Client-side password leak detection using Have I Been Pwned (HIBP) API with k-Anonymity model.
+
+**Usage:**
+
+```typescript
+const { checkPassword, checkPasswordWithMessage, isChecking, error } = usePasswordLeakCheck();
+
+// Simple boolean check
+const isLeaked = await checkPassword('P@ssw0rd123');
+
+// With user-friendly message
+const result = await checkPasswordWithMessage('P@ssw0rd123');
+if (result.isLeaked) {
+  errorMsg.value = result.message; // "This password has appeared in a known data breach..."
+}
+```
+
+**Features:**
+
+- k-Anonymity protection (only sends 5-char hash prefix)
+- Fail-open strategy (doesn't block on API errors)
+- Loading states for UX
+- Integrates with password reset flow
+- See full documentation: `docs/PASSWORD_LEAK_CHECK.md`
+
+**Security:**
+
+- Hashes password client-side (SHA-1)
+- Only sends first 5 characters of hash to HIBP
+- Full password never leaves client
+- Privacy-preserving with `Add-Padding` header
+
 ### useContactFormValidation
 
 Contact form validation, state management, and submission with hCaptcha.
@@ -1858,32 +1892,45 @@ productRowToFormData(product: ProductRow): ProductFormData;
 
 **Features:**
 
-- Monitors user activity (mouse, keyboard, scroll)
-- Auto-logout after 30 minutes inactivity
+- Validates session on page load (checks if 5 minutes passed since lastActivity)
+- Monitors user activity (mouse, keyboard, scroll, touch)
+- Auto-logout after 5 minutes of inactivity
+- Auto-logout after 5 minutes of tab being hidden
 - Tab visibility tracking
 - Cross-tab logout synchronization
-- LocalStorage event listeners
+- Browser/tab close detection
 
 **Configuration:**
 
 ```typescript
 AUTO_LOGOUT_CONFIG = {
-  INACTIVITY_TIMEOUT: 30 * 60 * 1000, // 30 minutes
-  ACTIVITY_CHECK_INTERVAL: 60 * 1000, // 1 minute
-  LOGOUT_EVENT_KEY: 'ju_logout_event',
+  INACTIVITY_TIMEOUT: 5 * 60 * 1000, // 5 minutes
+  LOGOUT_EVENT_KEY: 'admin_auto_logout',
+  ACTIVITY_EVENTS: ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'],
 };
 ```
+
+**Auto-Logout Scenarios:**
+
+1. **Browser/Tab Close & Reopen**: Validates session on page load - logs out if >5 minutes passed
+2. **Inactivity**: No user interaction for 5 minutes
+3. **Tab Hidden**: Admin tab hidden/switched away for 5 minutes
+4. **Cross-Tab**: Logout in one tab logs out all tabs
+
+**Testing Guide:** See `docs/AUTO_LOGOUT_TESTING.md`
 
 ### Auth SSR Plugin
 
 **File:** `plugins/auth-ssr.server.ts`
 
-**Purpose:** Hydrate auth state from server
+**Purpose:** Hydrate auth state from server with session validation
 
 **Features:**
 
 - Reads HttpOnly cookies on server
 - Validates session with Supabase
+- **Checks session expiry based on lastActivity**
+- Clears cookies if session expired
 - Populates auth store before client hydration
 - Prevents auth flash/flicker
 

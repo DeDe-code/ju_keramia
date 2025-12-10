@@ -5,8 +5,10 @@
  */
 
 import { useProductsStore } from '~~/stores/products';
+import { useNotifications } from '~~/composables/useNotifications';
 
 const productsStore = useProductsStore();
+const { notifySuccess, notifyError, notifyWarning } = useNotifications();
 
 defineProps<{
   selectedProductIds: string[];
@@ -18,20 +20,40 @@ const emit = defineEmits<{
 }>();
 
 const handleDeleteAllProducts = async () => {
+  if (productsStore.products.length === 0) {
+    notifyWarning('No Products', 'There are no products to delete');
+    return;
+  }
+
+  const count = productsStore.products.length;
   const success = await productsStore.deleteAllProducts();
+
   if (success) {
+    notifySuccess('All Products Deleted', `${count} product(s) deleted successfully`);
     productsStore.clearSelection();
     emit('clearSelection');
     emit('refresh');
+  } else {
+    notifyError('Delete Failed', productsStore.error || 'Failed to delete all products');
   }
 };
 
 const handleDeleteSelectedProducts = async () => {
+  if (productsStore.selectedIds.length === 0) {
+    notifyWarning('No Selection', 'Please select at least one product to delete');
+    return;
+  }
+
+  const count = productsStore.selectedIds.length;
   const success = await productsStore.deleteSelectedProducts();
+
   if (success) {
+    notifySuccess('Products Deleted', `${count} product(s) deleted successfully`);
     productsStore.clearSelection();
     emit('clearSelection');
     emit('refresh');
+  } else {
+    notifyError('Delete Failed', productsStore.error || 'Failed to delete selected products');
   }
 };
 </script>

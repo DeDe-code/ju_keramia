@@ -18,8 +18,8 @@
  */
 
 import { defineNuxtPlugin } from 'nuxt/app';
-import { useAuthStore } from '../stores/auth';
-import { AUTO_LOGOUT_CONFIG, safeLocalStorage } from '../stores/index';
+import { useAuthStore } from '../../stores/auth';
+import { AUTO_LOGOUT_CONFIG, safeLocalStorage } from '../../stores/index';
 
 console.log('[AUTO-LOGOUT PLUGIN] Loading...');
 
@@ -96,7 +96,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     safeLocalStorage.setItem(AUTO_LOGOUT_CONFIG.LOGOUT_EVENT_KEY, Date.now().toString());
 
     // Perform logout
-    // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
     await authStore.signOut();
   };
 
@@ -108,7 +107,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (!authStore.isAuthenticated || !authStore.isTabVisible) return;
 
     clearTimers();
-    // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
     authStore.resetActivity();
 
     inactivityTimer = setTimeout(() => {
@@ -124,7 +122,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (!authStore.isAuthenticated) return;
 
     const isVisible = !document.hidden && document.hasFocus();
-    // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
     authStore.setTabVisibility(isVisible);
 
     if (!isVisible) {
@@ -155,7 +152,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
 
     // Session still valid - restart inactivity timer
-    // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
     authStore.setTabVisibility(true);
     resetInactivityTimer();
   };
@@ -167,7 +163,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (!authStore.isAuthenticated) return;
 
     // Window lost focus - start visibility timer
-    // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
     authStore.setTabVisibility(false);
     clearTimers();
     visibilityTimer = setTimeout(() => {
@@ -188,11 +183,10 @@ export default defineNuxtPlugin((nuxtApp) => {
   /**
    * Listen for logout events from other tabs
    */
-  const handleStorageChange = (e: StorageEvent) => {
+  const handleStorageChange = (e: StorageEvent): void => {
     if (e.key === AUTO_LOGOUT_CONFIG.LOGOUT_EVENT_KEY) {
       // Another tab triggered logout
       clearTimers();
-      // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
       authStore.signOut();
     }
   };

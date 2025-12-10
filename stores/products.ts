@@ -76,23 +76,6 @@ export const useProductsStore = defineStore('products', () => {
   });
 
   // ============================================
-  // HELPER: Toast Notifications
-  // ============================================
-
-  function showToast(
-    title: string,
-    description: string,
-    color: 'success' | 'error' | 'warning' = 'success'
-  ) {
-    if (!import.meta.client) return;
-    // @ts-expect-error - useToast is auto-imported by Nuxt UI
-    const toast = globalThis.useToast();
-    if (toast) {
-      toast.add({ title, description, color });
-    }
-  }
-
-  // ============================================
   // ACTIONS: Fetch Operations
   // ============================================
 
@@ -119,7 +102,6 @@ export const useProductsStore = defineStore('products', () => {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load products';
       error.value = errorMsg;
-      showToast('Error', errorMsg, 'error');
       throw err;
     } finally {
       loading.value = false;
@@ -162,10 +144,10 @@ export const useProductsStore = defineStore('products', () => {
     products.value.unshift(tempProduct);
 
     try {
-      const supabase = useSupabase();
-      const { data, error: createError } = await supabase
-        .from('products')
-        .insert({
+      // Use authenticated API endpoint instead of direct Supabase call
+      const response = await $fetch('/api/admin/products', {
+        method: 'POST',
+        body: {
           name: productData.name,
           slug: productData.slug,
           description: productData.description,
@@ -176,19 +158,19 @@ export const useProductsStore = defineStore('products', () => {
           materials: productData.materials,
           in_stock: productData.in_stock,
           featured: productData.featured,
-        })
-        .select()
-        .single();
+        },
+      });
 
-      if (createError) throw createError;
+      if (!response.success || !response.data) {
+        throw new Error('Failed to create product');
+      }
 
       // Replace temp product with real product
       const index = products.value.findIndex((p) => p.id === tempProduct.id);
-      if (index !== -1 && data) {
-        products.value[index] = data;
+      if (index !== -1) {
+        products.value[index] = response.data;
       }
 
-      showToast('Success', `Product "${productData.name}" created successfully`);
       await refreshProducts();
       return true;
     } catch (err) {
@@ -197,7 +179,6 @@ export const useProductsStore = defineStore('products', () => {
 
       const errorMsg = err instanceof Error ? err.message : 'Failed to create product';
       error.value = errorMsg;
-      showToast('Error', errorMsg, 'error');
       return false;
     } finally {
       loading.value = false;
@@ -241,10 +222,10 @@ export const useProductsStore = defineStore('products', () => {
     } as ProductRow;
 
     try {
-      const supabase = useSupabase();
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({
+      // Use authenticated API endpoint instead of direct Supabase call
+      const response = await $fetch(`/api/admin/products/${id}`, {
+        method: 'PATCH',
+        body: {
           name: productData.name,
           slug: productData.slug,
           description: productData.description,
@@ -256,12 +237,13 @@ export const useProductsStore = defineStore('products', () => {
           in_stock: productData.in_stock,
           featured: productData.featured,
           updated_at: new Date().toISOString(),
-        })
-        .eq('id', id);
+        },
+      });
 
-      if (updateError) throw updateError;
+      if (!response.success) {
+        throw new Error('Failed to update product');
+      }
 
-      showToast('Success', `Product "${productData.name}" updated successfully`);
       await refreshProducts();
       return true;
     } catch (err) {
@@ -270,7 +252,6 @@ export const useProductsStore = defineStore('products', () => {
 
       const errorMsg = err instanceof Error ? err.message : 'Failed to update product';
       error.value = errorMsg;
-      showToast('Error', errorMsg, 'error');
       return false;
     } finally {
       loading.value = false;
@@ -302,12 +283,11 @@ export const useProductsStore = defineStore('products', () => {
     selectedIds.value = selectedIds.value.filter((id) => id !== productId);
 
     try {
-      const supabase = useSupabase();
-      const { error: deleteError } = await supabase.from('products').delete().eq('id', productId);
+      // Use authenticated API endpoint instead of direct Supabase call
+      await $fetch(`/api/admin/products/${productId}`, {
+        method: 'DELETE',
+      });
 
-      if (deleteError) throw deleteError;
-
-      showToast('Success', `Product "${originalProduct.name}" deleted successfully`);
       return true;
     } catch (err) {
       // Rollback optimistic update
@@ -318,7 +298,6 @@ export const useProductsStore = defineStore('products', () => {
 
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete product';
       error.value = errorMsg;
-      showToast('Error', errorMsg, 'error');
       return false;
     } finally {
       loading.value = false;
@@ -331,7 +310,6 @@ export const useProductsStore = defineStore('products', () => {
 
   async function deleteSelectedProducts(): Promise<boolean> {
     if (selectedIds.value.length === 0) {
-      showToast('No Selection', 'Please select at least one product to delete', 'warning');
       return false;
     }
 
@@ -354,7 +332,6 @@ export const useProductsStore = defineStore('products', () => {
 
       if (deleteError) throw deleteError;
 
-      showToast('Success', `${idsToDelete.length} product(s) deleted successfully`);
       return true;
     } catch (err) {
       // Rollback optimistic update
@@ -363,7 +340,6 @@ export const useProductsStore = defineStore('products', () => {
 
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete selected products';
       error.value = errorMsg;
-      showToast('Error', errorMsg, 'error');
       return false;
     } finally {
       loading.value = false;
@@ -376,7 +352,6 @@ export const useProductsStore = defineStore('products', () => {
 
   async function deleteAllProducts(): Promise<boolean> {
     if (products.value.length === 0) {
-      showToast('No Products', 'There are no products to delete', 'warning');
       return false;
     }
 
@@ -401,7 +376,6 @@ export const useProductsStore = defineStore('products', () => {
 
       if (deleteError) throw deleteError;
 
-      showToast('Success', 'All products deleted successfully');
       return true;
     } catch (err) {
       // Rollback optimistic update
@@ -409,7 +383,6 @@ export const useProductsStore = defineStore('products', () => {
 
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete all products';
       error.value = errorMsg;
-      showToast('Error', errorMsg, 'error');
       return false;
     } finally {
       loading.value = false;

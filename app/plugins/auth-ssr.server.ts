@@ -21,15 +21,15 @@ import { getCookie, setCookie } from 'h3';
 import { defineNuxtPlugin, useRequestEvent } from 'nuxt/app';
 import type { NuxtApp } from 'nuxt/app';
 import type { Pinia } from 'pinia';
-import { useAuthStore } from '../stores/auth';
-import { sanitizeUser } from '../server/utils/auth-helpers';
-import { getSupabaseServer, clearAuthCookies, AUTH_COOKIE_OPTIONS } from '../server/utils/auth';
-import { AUTO_LOGOUT_CONFIG } from '../stores/index';
+import { useAuthStore } from '../../stores/auth';
+import { sanitizeUser } from '../../server/utils/auth-helpers';
+import { getSupabaseServer, clearAuthCookies, AUTH_COOKIE_OPTIONS } from '../../server/utils/auth';
+import { AUTO_LOGOUT_CONFIG } from '../../stores/index';
 
-export default defineNuxtPlugin(async (nuxtApp: NuxtApp) => {
-  // Only run on server-side
-  if (import.meta.client) return;
-
+/**
+ * Hydrate auth store from server-side session
+ */
+async function hydrateAuthFromCookies(nuxtApp: NuxtApp): Promise<void> {
   const authStore = useAuthStore(nuxtApp.$pinia as Pinia) as ReturnType<typeof useAuthStore>;
   const event = useRequestEvent();
 
@@ -42,7 +42,6 @@ export default defineNuxtPlugin(async (nuxtApp: NuxtApp) => {
 
     // If no tokens, user is not authenticated
     if (!accessToken) {
-      // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
       authStore.hydrateFromServer(null, false);
       return;
     }
@@ -59,7 +58,6 @@ export default defineNuxtPlugin(async (nuxtApp: NuxtApp) => {
     if (sessionError || !sessionData.user) {
       // Invalid session - clear cookies and set unauthenticated state
       clearAuthCookies(event);
-      // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
       authStore.hydrateFromServer(null, false);
       return;
     }
@@ -73,14 +71,12 @@ export default defineNuxtPlugin(async (nuxtApp: NuxtApp) => {
         `SSR: Session expired (${Math.round(timeSinceActivity / 1000 / 60)} minutes since last activity)`
       );
       clearAuthCookies(event);
-      // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
       authStore.hydrateFromServer(null, false);
       return;
     }
 
     // Valid and not expired - hydrate store with sanitized user data
     const sanitizedUser = sanitizeUser(sessionData.user);
-    // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
     authStore.hydrateFromServer(sanitizedUser, true);
 
     // Optional: Refresh tokens if needed (handle refresh logic)
@@ -99,7 +95,14 @@ export default defineNuxtPlugin(async (nuxtApp: NuxtApp) => {
     }
   } catch (error) {
     console.error('SSR auth hydration error:', error);
-    // @ts-expect-error - Pinia action exists at runtime but TypeScript can't infer it
     authStore.hydrateFromServer(null, false);
   }
+}
+
+// @ts-expect-error - TypeScript has circular reference issues with async plugin initialization
+export default defineNuxtPlugin((nuxtApp: NuxtApp) => {
+  // Only run on server-side
+  if (import.meta.client) return;
+
+  return hydrateAuthFromCookies(nuxtApp);
 });
