@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useProductsStore } from '~~/stores/products';
+import { useNotifications } from '~~/composables/useNotifications';
 import type { ProductRow, ProductFormData } from '~~/types/admin';
 import { productRowToFormData } from '~~/types/admin';
 import { useAuthStore } from '~~/stores/auth';
 
-// Use admin layout (no header/footer) with auth middleware
+// Use admin layout (no header/footer)
 definePageMeta({
   layout: 'admin',
-  // @ts-expect-error - Nuxt auto-imports middleware from middleware/ directory
-  middleware: 'auth',
 });
 
 // Auth check
@@ -18,15 +17,22 @@ if (import.meta.client && !authStore.isLoggedIn) {
   await navigateTo('/admin');
 }
 
-// Products store
+// Products store and notifications
 const productsStore = useProductsStore();
+const { notifySuccess, notifyError, notifyFetchError } = useNotifications();
 
 // State
 const showProductForm = ref(false);
 const editingProduct = ref<ProductFormData | undefined>(undefined);
 
 // Fetch products during SSR (prevents hydration mismatch)
-await productsStore.fetchProducts();
+try {
+  await productsStore.fetchProducts();
+} catch (error) {
+  if (import.meta.client) {
+    notifyFetchError('Products', error instanceof Error ? error.message : undefined);
+  }
+}
 
 /**
  * Toggle product selection
@@ -56,18 +62,32 @@ const handleEditProduct = (product: any) => {
 const handleProductSubmit = async (product: ProductFormData) => {
   let success = false;
 
-  if (editingProduct.value?.id) {
-    // Update existing product
-    success = await productsStore.updateProduct(editingProduct.value.id, product);
-  } else {
-    // Create new product
-    success = await productsStore.createProduct(product);
-  }
+  try {
+    if (editingProduct.value?.id) {
+      // Update existing product
+      success = await productsStore.updateProduct(editingProduct.value.id, product);
+      if (success) {
+        notifySuccess('Product Updated', `"${product.name}" was updated successfully`);
+      } else {
+        notifyError('Update Failed', productsStore.error || 'Failed to update product');
+      }
+    } else {
+      // Create new product
+      success = await productsStore.createProduct(product);
+      if (success) {
+        notifySuccess('Product Created', `"${product.name}" was created successfully`);
+      } else {
+        notifyError('Create Failed', productsStore.error || 'Failed to create product');
+      }
+    }
 
-  if (success) {
-    // Close form
-    showProductForm.value = false;
-    editingProduct.value = undefined;
+    if (success) {
+      // Close form
+      showProductForm.value = false;
+      editingProduct.value = undefined;
+    }
+  } catch (error) {
+    notifyError('Error', error instanceof Error ? error.message : 'An unexpected error occurred');
   }
 };
 
@@ -83,7 +103,19 @@ const handleProductCancel = () => {
  * Handle product delete
  */
 const handleDeleteProduct = async (productId: string) => {
-  await productsStore.deleteProduct(productId);
+  const product = productsStore.productById(productId);
+  const productName = product?.name || 'Product';
+
+  try {
+    const success = await productsStore.deleteProduct(productId);
+    if (success) {
+      notifySuccess('Product Deleted', `"${productName}" was deleted successfully`);
+    } else {
+      notifyError('Delete Failed', productsStore.error || 'Failed to delete product');
+    }
+  } catch (error) {
+    notifyError('Error', error instanceof Error ? error.message : 'An unexpected error occurred');
+  }
 };
 </script>
 

@@ -10,8 +10,6 @@ import { useAuthStore } from '~~/stores/auth';
 
 definePageMeta({
   layout: 'admin',
-  // @ts-expect-error - Nuxt auto-imports middleware from middleware/ directory
-  middleware: 'auth',
 });
 
 // Auth check
@@ -20,7 +18,7 @@ if (import.meta.client && !authStore.isLoggedIn) {
   await navigateTo('/admin');
 }
 
-const { notifyUploadSuccess, notifyUploadError } = useNotifications();
+const { notifyUploadSuccess, notifyUploadError, notifyFetchError } = useNotifications();
 const heroImagesStore = useHeroImagesStore();
 
 const aboutImage = computed(() => heroImagesStore.aboutImage);
@@ -37,8 +35,8 @@ const handleUploadError = (errorMsg: string) => {
 onMounted(async () => {
   try {
     await heroImagesStore.fetchHeroImages();
-  } catch {
-    // Error already handled by store
+  } catch (error) {
+    notifyFetchError('Hero Images', error instanceof Error ? error.message : undefined);
   }
 });
 </script>

@@ -126,6 +126,58 @@ ju_keramia/
 └── nuxt.config.ts                    # Nuxt configuration
 ```
 
+## 🔒 Security
+
+### Row Level Security (RLS)
+
+All database tables are protected with PostgreSQL Row Level Security policies:
+
+- ✅ **RLS Enabled**: All tables have RLS enabled
+- ✅ **Admin-Only Write Access**: Only registered admin users can create/update/delete
+- ✅ **Public Read Access**: Products and hero images are publicly viewable
+- ✅ **Email-Based Admin Check**: Admin verification via `is_admin()` function
+
+**Admin User Management:**
+
+- Admin access is controlled by email whitelist in `is_admin()` function
+- Default admin: `jukeramia@gmail.com`
+- To add more admins, update `supabase/migrations/009_fix_hero_images_rls.sql`
+
+**Protected Tables:**
+
+- `hero_images` - Landing/About page hero images
+- `products` - Product catalog
+- `orders` - Customer orders (future feature)
+
+**Documentation:** See [docs/RLS_SECURITY.md](docs/RLS_SECURITY.md) for complete details.
+
+### Authentication Security
+
+- 🔐 **HttpOnly Cookies**: Tokens stored in HttpOnly cookies (XSS protection)
+- 🕒 **Auto-Logout**: 30-minute inactivity timeout
+- 🔑 **Strong Password Policy**: Min 8 chars, uppercase, lowercase, number, special char
+- 🛡️ **Leaked Password Check**: Client-side HIBP integration blocks compromised passwords
+- 🚫 **CSRF Protection**: SameSite=lax cookie attribute
+
+**Documentation:** See [docs/PASSWORD_LEAK_CHECK.md](docs/PASSWORD_LEAK_CHECK.md) for password security details.
+
+### Applying RLS Migrations
+
+**Important:** Before running migrations, update the admin email in the SQL files:
+
+```bash
+# 1. Edit the admin email
+vim supabase/migrations/009_fix_hero_images_rls.sql
+# Change 'jukeramia@gmail.com' to your admin email
+
+# 2. Run migrations
+supabase db push
+
+# Or use the automated script
+chmod +x scripts/apply-rls-migration.sh
+./scripts/apply-rls-migration.sh
+```
+
 ## 🚀 Getting Started
 
 ### Prerequisites

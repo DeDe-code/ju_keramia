@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSupabase } from '~~/composables/useSupabase';
+import { usePasswordLeakCheck } from '~~/composables/usePasswordLeakCheck';
 import {
   adminPasswordResetSchema,
   type AdminPasswordResetSchema,
@@ -14,6 +15,7 @@ definePageMeta({
 
 const router = useRouter();
 const supabase = useSupabase();
+const { checkPasswordWithMessage, isChecking: checkingLeak } = usePasswordLeakCheck();
 
 const form = ref<AdminPasswordResetSchema>({
   newPassword: '',
@@ -26,6 +28,7 @@ const canReset = ref(false); // becomes true after a successful token exchange
 
 const errorMsg = ref('');
 const successMsg = ref('');
+const leakWarning = ref('');
 
 // Use shared schema for validation (Zod)
 const schema = adminPasswordResetSchema;
@@ -104,8 +107,19 @@ const updateUserPassword = async () => {
   loading.value = true;
   errorMsg.value = '';
   successMsg.value = '';
+  leakWarning.value = '';
 
   try {
+    // Check if password has been leaked (client-side HIBP check)
+    const leakCheck = await checkPasswordWithMessage(form.value.newPassword);
+
+    if (leakCheck.isLeaked) {
+      errorMsg.value =
+        leakCheck.message || 'This password has been compromised. Please choose a different one.';
+      loading.value = false;
+      return;
+    }
+
     // Ensure we still have a session (should be true after exchange)
     const {
       data: { session },
@@ -154,6 +168,9 @@ const updateUserPassword = async () => {
         {{ errorMsg }}
       </div>
       <div v-if="successMsg" class="mb-ceramic-sm text-sage-700">{{ successMsg }}</div>
+      <div v-if="leakWarning" class="mb-ceramic-sm text-amber-600 text-ceramic-sm">
+        {{ leakWarning }}
+      </div>
 
       <!-- Optional: a lightweight exchanging state -->
       <div v-if="exchanging" class="opacity-70 mb-4">Preparing reset…</div>
@@ -191,13 +208,13 @@ const updateUserPassword = async () => {
             type="submit"
             size="lg"
             color="neutral"
-            :loading="loading"
-            :disabled="loading || !canReset || exchanging"
+            :loading="loading || checkingLeak"
+            :disabled="loading || checkingLeak || !canReset || exchanging"
             class="w-full mt-ceramic-sm py-ceramic-sm bg-clay-700 hover:bg-stone-700 text-cream-25 rounded-none"
           >
-            <template v-if="loading">
+            <template v-if="loading || checkingLeak">
               <UIcon name="i-heroicons-arrow-path" class="animate-spin !text-ceramic-base mr-2" />
-              Sending...
+              {{ checkingLeak ? 'Checking password...' : 'Sending...' }}
             </template>
             <template v-else> Submit </template>
           </UButton>

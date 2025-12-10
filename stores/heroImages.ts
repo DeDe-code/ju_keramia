@@ -74,23 +74,6 @@ export const useHeroImagesStore = defineStore('heroImages', () => {
   });
 
   // ============================================
-  // HELPER: Toast Notifications
-  // ============================================
-
-  function showToast(
-    title: string,
-    description: string,
-    color: 'success' | 'error' | 'warning' = 'success'
-  ) {
-    if (!import.meta.client) return;
-    // @ts-expect-error - useToast is auto-imported by Nuxt UI
-    const toast = globalThis.useToast();
-    if (toast) {
-      toast.add({ title, description, color });
-    }
-  }
-
-  // ============================================
   // METHODS: Image Retrieval
   // ============================================
 
@@ -139,18 +122,9 @@ export const useHeroImagesStore = defineStore('heroImages', () => {
       });
 
       lastFetch.value = new Date();
-
-      if (import.meta.client && data && data.length > 0) {
-        showToast('Success', `Loaded ${data.length} hero image(s)`);
-      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load hero images';
       error.value = errorMsg;
-
-      if (import.meta.client) {
-        showToast('Error', errorMsg, 'error');
-      }
-
       throw err;
     } finally {
       loading.value = false;

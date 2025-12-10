@@ -182,6 +182,24 @@ export const useAuthStore = defineStore('auth', {
     setTabVisibility(isVisible: boolean) {
       this.isTabVisible = isVisible;
     },
+
+    /**
+     * Validate session (check if expired based on lastActivity)
+     * Returns true if session is valid, false if expired
+     */
+    async validateSession(): Promise<boolean> {
+      if (!this.isAuthenticated) return false;
+
+      const timeSinceActivity = Date.now() - this.lastActivity;
+
+      // If more than 5 minutes have passed, session is expired
+      if (timeSinceActivity > AUTO_LOGOUT_CONFIG.INACTIVITY_TIMEOUT) {
+        await this.signOut();
+        return false;
+      }
+
+      return true;
+    },
   },
 
   /**
