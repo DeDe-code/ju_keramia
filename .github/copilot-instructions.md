@@ -350,6 +350,113 @@ Dropdown menu with items.
 </UDropdownMenu>
 ```
 
+#### UCarousel
+
+Carousel component for displaying multiple images with swipe/drag support.
+
+**Props:**
+
+- `items`: Array of items to display (string[] or object[])
+- `arrows`: Show prev/next navigation buttons (boolean)
+- `dots`: Show navigation dots (boolean)
+- `prev`: Configure prev button (ButtonProps)
+- `next`: Configure next button (ButtonProps)
+- `loop`: Enable infinite looping (boolean)
+- `orientation`: `horizontal` | `vertical`
+- `ui`: Customize slots (root, viewport, container, item, controls, arrows, prev, next, dots, dot)
+
+**Slots:**
+
+- `default`: Render each carousel item (receives `{ item }`)
+
+**Usage:**
+
+```vue
+<script setup>
+// Basic carousel with 3 product images
+const productImages = ref([
+  'https://cdn.example.com/product-1.webp',
+  'https://cdn.example.com/product-2.webp',
+  'https://cdn.example.com/product-3.webp',
+]);
+
+const hasMultipleImages = computed(() => productImages.value.length > 1);
+</script>
+
+<template>
+  <!-- Product carousel with arrows and dots -->
+  <UCarousel
+    v-slot="{ item }"
+    :items="productImages"
+    :arrows="hasMultipleImages"
+    :dots="hasMultipleImages"
+    :prev="{ color: 'neutral', variant: 'soft', size: 'xs' }"
+    :next="{ color: 'neutral', variant: 'soft', size: 'xs' }"
+    :ui="{
+      root: 'w-full h-full',
+      item: 'h-full',
+      prev: 'left-ceramic-xs',
+      next: 'right-ceramic-xs',
+      dots: 'bottom-ceramic-xs',
+    }"
+    class="w-full aspect-square"
+  >
+    <NuxtImg
+      :src="item"
+      alt="Product Image"
+      class="w-full h-full object-cover"
+      loading="lazy"
+      format="webp"
+      quality="75"
+      sizes="sm:100vw md:50vw lg:400px"
+    />
+  </UCarousel>
+</template>
+```
+
+**Caching Best Practices for UCarousel:**
+
+When using UCarousel with Cloudflare R2 images, follow these guidelines to minimize R2 operations:
+
+1. **Limit Images Per Product**: Maximum 3 images per carousel
+2. **Use Lazy Loading**: Always set `loading="lazy"` on NuxtImg
+3. **Optimize Image Quality**: Use 70-75% quality for thumbnails
+4. **Responsive Sizes**: Specify `sizes` attribute for responsive images
+5. **WebP Format**: Always use `format="webp"` for better compression
+
+**Example - AdminProductCard with UCarousel:**
+
+```vue
+<script setup>
+const carouselImages = computed(() => {
+  if (!product.images || product.images.length === 0) return [];
+  return product.images.slice(0, 3); // Limit to 3 images
+});
+
+const hasMultipleImages = computed(() => carouselImages.value.length > 1);
+</script>
+
+<template>
+  <UCarousel
+    v-if="carouselImages.length > 0"
+    v-slot="{ item }"
+    :items="carouselImages"
+    :arrows="hasMultipleImages"
+    :dots="hasMultipleImages"
+    class="w-full aspect-square"
+  >
+    <NuxtImg
+      :src="item"
+      :alt="`${product.name} - Product Image`"
+      loading="lazy"
+      format="webp"
+      quality="75"
+      sizes="sm:100vw md:50vw lg:400px"
+    />
+  </UCarousel>
+</template>
+```
+
 ### Nuxt UI Customization Patterns
 
 #### Using the `ui` Prop
@@ -2000,23 +2107,84 @@ useHead({
 
 ## Performance Optimization
 
-### Image Optimization
+### Image Optimization & Cloudflare R2 Caching Strategy
+
+**Critical**: The project uses Cloudflare R2 free tier with strict operation limits. Always follow these caching best practices:
+
+#### Cloudflare R2 Free Tier Limits
+
+- **Storage**: 10 GB/month (free)
+- **Class A Operations** (writes): 1,000,000/month (free)
+- **Class B Operations** (reads): 10,000,000/month (free)
+
+#### Multi-Layer Caching Strategy
+
+**1. Browser Caching (30 Days)**
+
+- Configured in `nuxt.config.ts` with `maxAge: 2592000` (30 days)
+- HTTP headers: `Cache-Control: public, max-age=2592000, immutable`
+- Reduces R2 read operations by 99%+
+
+**2. Image Format Optimization**
+
+- Always use WebP format: `format="webp"`
+- Quality settings per use case:
+  - Product thumbnails: 70-75%
+  - Product display: 80%
+  - Hero images: 85%
+
+**3. Image Presets**
+
+```vue
+<!-- Use appropriate presets to minimize R2 operations -->
+
+<!-- Admin product cards (400x400) -->
+<NuxtImg :src="product.image" preset="productThumb" loading="lazy" />
+
+<!-- Shop product pages (800x800) -->
+<NuxtImg :src="product.image" preset="productDisplay" loading="lazy" />
+
+<!-- Hero images (1920x1080) -->
+<NuxtImg :src="heroImage" preset="hero" loading="lazy" />
+```
+
+**4. UCarousel with Lazy Loading**
 
 ```vue
 <template>
-  <!-- Product images with ceramic-specific optimization -->
-  <NuxtImg
-    :src="`/image/products/${product.slug}.jpg`"
-    :alt="product.name"
-    format="webp"
-    quality="85"
-    sizes="sm:100vw md:50vw lg:33vw"
-    class="w-full h-64 object-cover rounded-ceramic-md"
-    loading="lazy"
-    placeholder
-  />
+  <!-- Product carousel with optimized caching -->
+  <UCarousel
+    v-slot="{ item }"
+    :items="carouselImages"
+    :arrows="hasMultipleImages"
+    :dots="hasMultipleImages"
+  >
+    <NuxtImg
+      :src="item"
+      :alt="`${product.name} - Product Image`"
+      loading="lazy"
+      format="webp"
+      quality="75"
+      sizes="sm:100vw md:50vw lg:400px"
+    />
+  </UCarousel>
 </template>
 ```
+
+**Best Practices:**
+
+1. Limit to 3 images per product carousel
+2. Always use `loading="lazy"` on images
+3. Specify responsive `sizes` attribute
+4. Use WebP format for 30% smaller file sizes
+5. Avoid cache-busting parameters (timestamps, random values)
+6. Use versioned filenames when content changes (e.g., `product-v2.webp`)
+
+**Monitoring:**
+
+- Check Cloudflare R2 dashboard monthly for usage metrics
+- Set up alerts at 80% of free tier limits
+- See `docs/IMAGE_CACHING_STRATEGY.md` for complete details
 
 ### Bundle Optimization
 

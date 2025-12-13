@@ -38,6 +38,19 @@ export default defineNuxtConfig({
   // Route rules for redirects and optimization
   routeRules: {
     '/admin/hero-images': { redirect: '/admin/hero-images/landing' },
+    // Aggressive caching for images from Cloudflare R2
+    // This reduces Class B operations (reads) on R2
+    '/_ipx/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=2592000, immutable', // 30 days
+      },
+    },
+    // Cache static assets
+    '/image/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=2592000, immutable', // 30 days
+      },
+    },
   },
 
   // Enable modern View Transitions API for smooth page transitions
@@ -71,15 +84,52 @@ export default defineNuxtConfig({
   // Nuxt Image configuration
   image: {
     // Configure IPX provider settings
-    quality: 80,
+    quality: 75, // Reduced quality for better compression (was 80)
     format: ['webp', 'avif', 'jpg'],
     // Enable local image optimization
     provider: 'ipx',
     // Configure domains for external images
     domains: ['cdn.jukeramia.com'],
-    // IPX configuration
+    // IPX configuration with aggressive caching
     ipx: {
-      maxAge: 60 * 60 * 24 * 7, // 7 days cache
+      maxAge: 60 * 60 * 24 * 30, // 30 days browser cache (increased from 7 days)
+      // Cloudflare R2 caching strategy:
+      // - Browser cache: 30 days
+      // - CDN edge cache: Set via Cloudflare Cache Rules
+      // - This reduces R2 read operations (Class B operations)
+    },
+    // Presets for different image types to optimize Cloudflare R2 usage
+    presets: {
+      // Product images in admin carousel (small thumbnails)
+      productThumb: {
+        modifiers: {
+          format: 'webp',
+          quality: 70,
+          width: 400,
+          height: 400,
+          fit: 'cover',
+        },
+      },
+      // Product images in shop (larger display)
+      productDisplay: {
+        modifiers: {
+          format: 'webp',
+          quality: 80,
+          width: 800,
+          height: 800,
+          fit: 'cover',
+        },
+      },
+      // Hero images
+      hero: {
+        modifiers: {
+          format: 'webp',
+          quality: 85,
+          width: 1920,
+          height: 1080,
+          fit: 'cover',
+        },
+      },
     },
   },
 

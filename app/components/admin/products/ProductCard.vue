@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Product card component displaying product info with selection, edit, and delete actions.
- * Shows product image, featured/stock badges, and action buttons.
+ * Shows product carousel with up to 3 images, featured/stock badges, and action buttons.
  */
 
 const props = defineProps<{
@@ -34,6 +34,17 @@ const handleEditProduct = () => {
 const handleDeleteProduct = () => {
   emit('delete', props.product.id);
 };
+
+// Prepare images array for carousel (max 3 images)
+const carouselImages = computed(() => {
+  if (!props.product.images || props.product.images.length === 0) {
+    return [];
+  }
+  return props.product.images.slice(0, 3);
+});
+
+// Show carousel arrows/dots only if there are multiple images
+const hasMultipleImages = computed(() => carouselImages.value.length > 1);
 </script>
 
 <template>
@@ -41,21 +52,49 @@ const handleDeleteProduct = () => {
     <UCard>
       <template #header>
         <div class="aspect-square bg-stone-100 relative">
-          <NuxtImg
-            v-if="product.images?.[0]"
-            :src="product.images[0]"
-            alt="Product Image"
-            class="w-full h-full object-cover"
-            loading="lazy"
-            format="webp"
-            quality="80"
-          />
+          <!-- Carousel for product images (max 3) -->
+          <UCarousel
+            v-if="carouselImages.length > 0"
+            v-slot="{ item }"
+            :items="carouselImages"
+            :arrows="hasMultipleImages"
+            :dots="hasMultipleImages"
+            :prev="{ color: 'neutral', variant: 'soft', size: 'xs' }"
+            :next="{ color: 'neutral', variant: 'soft', size: 'xs' }"
+            :ui="{
+              root: 'w-full h-full',
+              viewport: 'w-full h-full',
+              container: 'h-full',
+              item: 'h-full',
+              prev: 'left-ceramic-xs top-1/2 -translate-y-1/2',
+              next: 'right-ceramic-xs top-1/2 -translate-y-1/2',
+              dots: 'bottom-ceramic-xs',
+              dot: 'size-2',
+            }"
+            class="w-full h-full"
+          >
+            <NuxtImg
+              :src="item"
+              :alt="`${product.name} - Product Image`"
+              class="w-full h-full object-cover"
+              loading="lazy"
+              format="webp"
+              quality="75"
+              sizes="sm:100vw md:50vw lg:400px"
+              :modifiers="{ fit: 'cover' }"
+            />
+          </UCarousel>
+
+          <!-- Fallback for products with no images -->
+          <div v-else class="w-full h-full flex items-center justify-center text-stone-400">
+            <UIcon name="i-heroicons-photo" class="!text-ceramic-4xl" />
+          </div>
 
           <!-- Selection checkbox (top-right) -->
-          <div class="absolute top-ceramic-sm left-[21rem] z-10">
+          <div class="absolute top-ceramic-sm right-ceramic-sm z-20">
             <UCheckbox
               :model-value="selected"
-              class="rounded-ceramic-xs p-1"
+              class="rounded-ceramic-xs p-1 bg-cream-25/80 backdrop-blur-sm"
               @update:model-value="toggleProductSelection"
             />
           </div>
@@ -63,14 +102,14 @@ const handleDeleteProduct = () => {
           <!-- Status badges -->
           <div
             v-if="product.featured"
-            class="absolute top-ceramic-xs right-ceramic-xs bg-sage-600 text-cream-25 px-ceramic-xs py-0.5 rounded-ceramic-sm text-ceramic-xs font-medium"
+            class="absolute top-ceramic-xs left-ceramic-xs bg-sage-600 text-cream-25 px-ceramic-xs py-0.5 rounded-ceramic-sm text-ceramic-xs font-medium z-10"
           >
             Featured
           </div>
 
           <div
             v-if="!product.in_stock"
-            class="absolute bottom-ceramic-xs left-ceramic-xs bg-red-600 text-cream-25 px-ceramic-xs py-0.5 rounded-ceramic-sm text-ceramic-xs font-medium"
+            class="absolute bottom-ceramic-xs left-ceramic-xs bg-red-600 text-cream-25 px-ceramic-xs py-0.5 rounded-ceramic-sm text-ceramic-xs font-medium z-10"
           >
             Out of Stock
           </div>
