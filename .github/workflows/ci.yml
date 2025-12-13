@@ -175,6 +175,39 @@ jobs:
 
           echo "✅ Contact form security validation passed!"
 
+  # Sync to Owner Repository (triggers Vercel deployment)
+  sync-to-owner:
+    runs-on: ubuntu-latest
+    name: 🚀 Sync to Owner Repository
+    needs: [type-check, build, security-audit, design-system-check, contact-form-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper sync
+
+      - name: 🔐 Configure Git
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+
+      - name: 🚀 Push to Owner Repository
+        env:
+          OWNER_REPO_TOKEN: ${{ secrets.OWNER_REPO_TOKEN }}
+        run: |
+          # Add owner remote if it doesn't exist
+          if ! git remote | grep -q "owner"; then
+            git remote add owner https://x-access-token:${OWNER_REPO_TOKEN}@github.com/jukeramia/ju_keramia.git
+          fi
+          
+          # Push to owner repository (triggers Vercel deployment)
+          git push owner main --force-with-lease
+          
+          echo "✅ Successfully synced to owner repository!"
+          echo "🚀 Vercel deployment should trigger automatically"
+
   # Final Status Check
   all-checks-passed:
     runs-on: ubuntu-latest
