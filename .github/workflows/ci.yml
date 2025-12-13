@@ -186,7 +186,7 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper sync
+          fetch-depth: 0 # Fetch all history for proper sync
 
       - name: 🔐 Configure Git
         run: |
@@ -201,10 +201,10 @@ jobs:
           if ! git remote | grep -q "owner"; then
             git remote add owner https://x-access-token:${OWNER_REPO_TOKEN}@github.com/jukeramia/ju_keramia.git
           fi
-          
+
           # Push to owner repository (triggers Vercel deployment)
           git push owner main --force-with-lease
-          
+
           echo "✅ Successfully synced to owner repository!"
           echo "🚀 Vercel deployment should trigger automatically"
 
