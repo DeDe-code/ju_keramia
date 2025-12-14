@@ -8,6 +8,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   # Note: Linting is handled by separate lint.yaml workflow
   # This CI focuses on build, type-check, security, and ceramic-specific validations
@@ -236,6 +240,9 @@ jobs:
     runs-on: ubuntu-latest
     name: 🔄 Auto Create Pull Request
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: 📥 Checkout Repository
