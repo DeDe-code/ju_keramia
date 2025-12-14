@@ -26,3 +26,6 @@ logs
 # Debug/troubleshooting notes
 HCAPTCHA_DEBUGGING_NOTES.md
 HCAPTCHA_FIX_NOTES.md
+
+# Documentation (contains sensitive project information)
+docs/
