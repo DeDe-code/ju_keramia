@@ -193,14 +193,24 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
 
-      - name: 🚀 Push to Owner Repository
+      - name: 🔑 Setup SSH Key
         env:
-          OWNER_REPO_TOKEN: ${{ secrets.OWNER_REPO_TOKEN }}
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         run: |
-          # Add owner remote if it doesn't exist
+          mkdir -p ~/.ssh
+          echo "$SSH_DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: 🚀 Push to Owner Repository
+        run: |
+          # Add owner remote with SSH
           if ! git remote | grep -q "owner"; then
-            git remote add owner https://x-access-token:${OWNER_REPO_TOKEN}@github.com/jukeramia/ju_keramia.git
+            git remote add owner git@github.com:jukeramia/ju_keramia.git
           fi
+
+          # Configure git to use SSH key
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes"
 
           # Push to owner repository (triggers Vercel deployment)
           git push owner main --force-with-lease
