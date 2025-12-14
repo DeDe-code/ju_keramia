@@ -10,6 +10,30 @@ jobs:
   # Note: Linting is handled by separate lint.yaml workflow
   # This CI focuses on build, type-check, security, and ceramic-specific validations
 
+  # Linting
+  lint:
+    runs-on: ubuntu-latest
+    name: 🧹 Code Linting
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📋 Install Dependencies
+        run: npm ci
+
+      - name: 🧹 Run ESLint
+        run: npm run lint
+
+      - name: 📊 Linting Report
+        run: echo "✅ Code linting passed!"
+
   # TypeScript Type Checking
   type-check:
     runs-on: ubuntu-latest
@@ -179,7 +203,7 @@ jobs:
   sync-to-owner:
     runs-on: ubuntu-latest
     name: 🚀 Sync to Owner Repository
-    needs: [type-check, build, security-audit, design-system-check, contact-form-test]
+    needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
     if: github.ref == 'refs/heads/main'
 
     steps:
@@ -222,7 +246,7 @@ jobs:
   create-pr-to-main:
     runs-on: ubuntu-latest
     name: 🔀 Create PR to Main
-    needs: [type-check, build, security-audit, design-system-check, contact-form-test]
+    needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
     if: github.ref != 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -277,7 +301,7 @@ jobs:
   all-checks-passed:
     runs-on: ubuntu-latest
     name: ✅ All Quality Checks
-    needs: [type-check, build, security-audit, design-system-check, contact-form-test]
+    needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
     if: always()
 
     steps:
@@ -285,7 +309,7 @@ jobs:
         run: |
           echo "🏺 ====================================="
           echo "🎉 All Ju Keramia quality checks passed!"
-          echo "ℹ️  Code linting handled by lint.yaml"
+          echo "✅ Code linting"
           echo "✅ TypeScript type safety"
           echo "✅ Application build"
           echo "✅ Security audit"
