@@ -213,7 +213,7 @@ jobs:
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes"
 
           # Push to owner repository (triggers Vercel deployment)
-          git push owner main --force-with-lease
+          git push owner main --force
 
           echo "✅ Successfully synced to owner repository!"
           echo "🚀 Vercel deployment should trigger automatically"
