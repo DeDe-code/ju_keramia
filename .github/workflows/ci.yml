@@ -175,12 +175,12 @@ jobs:
 
           echo "✅ Contact form security validation passed!"
 
-  # Sync to Owner Repository (triggers Vercel deployment) test test again
+  # Sync to Owner Repository (triggers Vercel deployment)
   sync-to-owner:
     runs-on: ubuntu-latest
     name: 🚀 Sync to Owner Repository
     needs: [type-check, build, security-audit, design-system-check, contact-form-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: 📥 Checkout Repository
