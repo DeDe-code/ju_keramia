@@ -2,7 +2,7 @@ name: CI/CD Pipeline for Ju Keramia
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feature/**', 'feat/**', 'fix/**', 'hotfix/**']
   pull_request:
     branches: [main]
 
@@ -175,7 +175,7 @@ jobs:
 
           echo "✅ Contact form security validation passed!"
 
-  # Sync to Owner Repository (triggers Vercel deployment) - test token
+  # Sync to Owner Repository (triggers Vercel deployment)
   sync-to-owner:
     runs-on: ubuntu-latest
     name: 🚀 Sync to Owner Repository
@@ -217,6 +217,61 @@ jobs:
 
           echo "✅ Successfully synced to owner repository!"
           echo "🚀 Vercel deployment should trigger automatically"
+
+  # Create Pull Request from Feature Branch to Main
+  create-pr-to-main:
+    runs-on: ubuntu-latest
+    name: 🔀 Create PR to Main
+    needs: [type-check, build, security-audit, design-system-check, contact-form-test]
+    if: github.ref != 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔀 Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get branch name
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+
+          # Get latest commit info
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s")
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:"%an")
+          COMMIT_SHA=$(git log -1 --pretty=format:"%h")
+
+          # Create PR title and body
+          PR_TITLE="${COMMIT_MESSAGE}"
+          PR_BODY="## 🔄 Feature Branch Ready for Review
+
+          **Branch:** \`${BRANCH_NAME}\`
+          **Latest Commit:** ${COMMIT_SHA}
+          **Author:** ${COMMIT_AUTHOR}
+
+          ### ✅ Quality Checks Passed
+          - ✅ TypeScript type checking
+          - ✅ Application build
+          - ✅ Security audit
+          - ✅ Ceramic design system validation
+          - ✅ Contact form security
+
+          This PR is automatically created when changes are pushed to a feature branch.
+
+          **Ready for review and merge!**"
+
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --base main \
+            --head "$BRANCH_NAME" \
+            || echo "PR already exists or unable to create"
+
+      - name: 📊 PR Creation Report
+        run: echo "✅ Pull request created to main branch!"
 
   # Final Status Check
   all-checks-passed:
