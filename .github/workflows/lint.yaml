@@ -1,6 +1,8 @@
 name: Lint
 
 on:
+  push:
+    branches: [main, 'feature/**', 'feat/**', 'fix/**', 'hotfix/**']
   pull_request:
     branches:
       - main
