@@ -4,6 +4,9 @@
 /* Custom Ceramic Design System */
 
 @theme {
+  /* Custom Container Width for Ceramic Design System */
+  --ceramic-container: 100%;
+  /* Custom Ceramic Color Palette */
   --color-*: initial;
   /* Ceramic Error Red - for error states */
   --color-ceramic-error: #b85c4c;
@@ -354,6 +357,10 @@
 
 /* Base Styles for Ceramic Design System */
 @layer base {
+  :root {
+    --ui-container: var(--ceramic-container);
+  }
+
   body {
     font-family: var(--font-family-sans);
     background-color: theme('colors.cream.25');

@@ -36,11 +36,25 @@ export default defineAppConfig({
       neutral: 'stone', // Stone as neutral
     },
 
+    container: {
+      base: 'max-w-[var(--ui-container)] min-h-screen bg-cream-25 py-ceramic-xl px-ceramic-md',
+    },
+
     // Navigation menu with ceramic design
     navigationMenu: {
       slots: {
         root: 'bg-transparent',
         link: '!text-stone-950 font-ceramic-sans px-ceramic-xs py-ceramic-sm hover:!text-clay-800 transition-all duration-200',
+      },
+    },
+
+    // Card component with ceramic aesthetics
+    card: {
+      slots: {
+        root: '!w-sm !bg-cream-25 !rounded-none !shadow-lg hover:!shadow-xl !transition-shadow duration-200  ',
+        header: 'p-0  sm:px-0',
+        body: 'p-0 px-0 ',
+        footer: 'sm:px-0pl-ceramic-sm my-ceramic-sm',
       },
     },
 
@@ -130,6 +144,19 @@ export default defineAppConfig({
       },
     },
 
+    // Caroussel component
+    carousel: {
+      slots: {
+        root: 'w-full h-full',
+        viewport: 'w-full h-full',
+        container: 'h-full',
+        item: 'h-full',
+        prev: 'left-ceramic-xs top-1/2 -translate-y-1/2 sm:left-4 md:left-4 xl:left-4',
+        next: 'right-ceramic-xs top-1/2 -translate-y-1/2 sm:right-4 md:right-4 xl:right-4',
+        dots: 'bottom-ceramic-xs',
+        dot: 'size-2',
+      },
+    },
     switch: {
       slots: {
         base: 'w-ceramic-lg h-ceramic-md bg-stone-300 rounded-full relative transition-colors duration-200 ease-in-out cursor-pointer',
@@ -153,6 +180,7 @@ export default defineAppConfig({
         },
       },
     },
+
     // Form Components
     formField: {
       slots: {
@@ -217,14 +245,9 @@ export default defineAppConfig({
         },
       },
     },
-
-    // Card component with ceramic aesthetics
-    card: {
+    checkbox: {
       slots: {
-        root: '!w-sm !bg-cream-25 !rounded-none !shadow-lg hover:!shadow-xl !transition-shadow duration-200  ',
-        header: 'p-0  sm:px-0',
-        body: 'p-0 px-0 ',
-        footer: 'sm:px-0pl-ceramic-sm my-ceramic-sm',
+        base: 'ring-ceramic-error text-ceramic-error',
       },
     },
   },

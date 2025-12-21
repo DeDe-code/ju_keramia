@@ -18,7 +18,9 @@ const handleCreateProduct = () => {
 </script>
 
 <template>
-  <div class="flex justify-between items-center mb-ceramic-lg">
+  <div
+    class="sticky top-0 z-10 col-span-full bg-cream-25 border-b-2 border-stone-300 shadow-lg px-ceramic-md py-ceramic-md flex justify-between items-center"
+  >
     <div>
       <h3 class="font-ceramic-display text-ceramic-xl text-clay-800">Product Catalog</h3>
       <p class="text-ceramic-sm text-stone-600 mt-ceramic-xs">
