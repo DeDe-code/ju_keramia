@@ -102,7 +102,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-cream-25">
+  <UContainer>
     <div
       v-if="!user"
       class="w-lg max-w-lg h-[23rem] mx-auto flex flex-col justify-center mt-ceramic-xl p-ceramic-sm border border-stone-300 shadow-sm"
@@ -178,5 +178,5 @@ onMounted(() => {
       <!-- Dashboard Content with Tabs -->
       <AdminDashboardContent />
     </div>
-  </div>
+  </UContainer>
 </template>

@@ -120,7 +120,7 @@ const handleDeleteProduct = async (productId: string) => {
 </script>
 
 <template>
-  <div>
+  <UContainer>
     <!-- Product Form View -->
     <div v-if="showProductForm">
       <AdminProductForm
@@ -133,13 +133,6 @@ const handleDeleteProduct = async (productId: string) => {
 
     <!-- Product List View -->
     <div v-else>
-      <!-- Header -->
-      <AdminProductsProductCatalogHeader
-        :products="productsStore.products"
-        :selected-product-ids="productsStore.selectedIds"
-        @create="handleCreateProduct"
-      />
-
       <!-- Loading State -->
       <div v-if="productsStore.loading" class="flex justify-center py-ceramic-xl">
         <UIcon name="i-heroicons-arrow-path" class="!text-ceramic-3xl text-clay-600 animate-spin" />
@@ -155,7 +148,17 @@ const handleDeleteProduct = async (productId: string) => {
 
       <!-- Product Grid -->
       <div v-else>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-ceramic-md">
+        <div
+          class="grid grid-cols-[repeat(auto-fill,minmax(200px,382px))] justify-center gap-ceramic-md"
+        >
+          <!-- Sticky Header -->
+          <AdminProductsProductCatalogHeader
+            :products="productsStore.products"
+            :selected-product-ids="productsStore.selectedIds"
+            @create="handleCreateProduct"
+          />
+
+          <!-- Product Cards -->
           <AdminProductsProductCard
             v-for="product in productsStore.products"
             :key="product.id"
@@ -168,16 +171,16 @@ const handleDeleteProduct = async (productId: string) => {
             @delete="handleDeleteProduct"
             @toggle-selection="toggleProductSelection"
           />
-        </div>
 
-        <!-- Bulk Actions -->
-        <div class="flex gap-ceramic-sm mt-ceramic-lg">
-          <AdminProductsBulkActions
-            v-if="productsStore.hasSelection"
-            :selected-product-ids="productsStore.selectedIds"
-          />
+          <!-- Bulk Actions -->
+          <div class="flex gap-ceramic-sm mt-ceramic-lg col-span-full">
+            <AdminProductsBulkActions
+              v-if="productsStore.hasSelection"
+              :selected-product-ids="productsStore.selectedIds"
+            />
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </UContainer>
 </template>
