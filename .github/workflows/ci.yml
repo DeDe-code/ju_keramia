@@ -7,76 +7,75 @@ on:
     branches: [main]
 
 jobs:
-  # Note: Linting is handled by separate lint.yaml workflow
-  # This CI focuses on build, type-check, security, and ceramic-specific validations
+  # This CI covers linting, type-checking, build, security, and ceramic-specific validations
 
   # Linting
   lint:
     runs-on: ubuntu-latest
-    name: 🧹 Code Linting
+    name: Code Linting
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: 📋 Install Dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: 🧹 Run ESLint
+      - name: Run ESLint
         run: npm run lint
 
-      - name: 📊 Linting Report
-        run: echo "✅ Code linting passed!"
+      - name: Linting Report
+        run: echo "Code linting passed!"
 
   # TypeScript Type Checking
   type-check:
     runs-on: ubuntu-latest
-    name: 🔧 TypeScript Type Checking
+    name: TypeScript Type Checking
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: 📋 Install Dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: 🔧 TypeScript Check
+      - name: TypeScript Check
         run: npx nuxt typecheck
 
-      - name: 📊 Report Type Safety
-        run: echo "✅ TypeScript type checking passed!"
+      - name: Report Type Safety
+        run: echo "TypeScript type checking passed!"
 
   # Build Test
   build:
     runs-on: ubuntu-latest
-    name: 🏗️ Build Application
+    name: Build Application
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: 📋 Install Dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: 🏗️ Build Application
+      - name: Build Application
         run: npm run build
         env:
           # Provide test environment variables for build
@@ -84,140 +83,140 @@ jobs:
           NUXT_PUBLIC_HCAPTCHA_SITE_KEY: ${{ secrets.HCAPTCHA_SITE_KEY || 'test_site_key' }}
           NUXT_HCAPTCHA_SECRET_KEY: ${{ secrets.HCAPTCHA_SECRET_KEY || 'test_secret_key' }}
 
-      - name: 📊 Build Report
-        run: echo "✅ Application built successfully!"
+      - name: Build Report
+        run: echo "Application built successfully!"
 
   # Security Audit
   security-audit:
     runs-on: ubuntu-latest
-    name: 🔒 Security Audit
+    name: Security Audit
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: 📋 Install Dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: 🔒 Run Security Audit
+      - name: Run Security Audit
         run: npm audit --audit-level=moderate
 
-      - name: 📊 Security Report
-        run: echo "✅ Security audit completed!"
+      - name: Security Report
+        run: echo "Security audit completed!"
 
   # Ceramic Design System Validation
   design-system-check:
     runs-on: ubuntu-latest
-    name: 🎨 Ceramic Design System Validation
+    name: Ceramic Design System Validation
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: 📋 Install Dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: 🎨 Validate Ceramic Design Tokens
+      - name: Validate Ceramic Design Tokens
         run: |
-          echo "🔍 Checking ceramic design system consistency..."
+          echo "Checking ceramic design system consistency..."
 
           # Check if ceramic CSS variables are properly defined
           if grep -q "color-clay-" app/assets/css/main.css; then
-            echo "✅ Clay color tokens found"
+            echo "Clay color tokens found"
           else
-            echo "❌ Clay color tokens missing" && exit 1
+            echo "Clay color tokens missing" && exit 1
           fi
 
           if grep -q "color-sage-" app/assets/css/main.css; then
-            echo "✅ Sage color tokens found"
+            echo "Sage color tokens found"
           else
-            echo "❌ Sage color tokens missing" && exit 1
+            echo "Sage color tokens missing" && exit 1
           fi
 
           if grep -q "spacing-ceramic-" app/assets/css/main.css; then
-            echo "✅ Ceramic spacing tokens found"
+            echo "Ceramic spacing tokens found"
           else
-            echo "❌ Ceramic spacing tokens missing" && exit 1
+            echo "Ceramic spacing tokens missing" && exit 1
           fi
 
-          echo "✅ Ceramic design system validation passed!"
+          echo "Ceramic design system validation passed!"
 
   # Contact Form Validation Test
   contact-form-test:
     runs-on: ubuntu-latest
-    name: 📧 Contact Form Validation
+    name: Contact Form Validation
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: 📋 Install Dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: 📧 Validate Contact Form Security
+      - name: Validate Contact Form Security
         run: |
-          echo "🔍 Checking contact form security implementation..."
+          echo "Checking contact form security implementation..."
 
           # Check if form validation is implemented (supports both manual and Nuxt UI patterns)
           if grep -q ':schema="schema"' app/pages/contact/index.vue || grep -q "schema.parse(form.value)" app/pages/contact/index.vue; then
-            echo "✅ Form validation implementation found"
+            echo "Form validation implementation found"
           else
-            echo "❌ Form validation missing - security risk!" && exit 1
+            echo "Form validation missing - security risk!" && exit 1
           fi
 
           # Check if validation schema is imported (either directly or via composable)
           if grep -q "useContactFormValidation" app/pages/contact/index.vue || grep -q "contactFormSchema" app/pages/contact/index.vue; then
-            echo "✅ Validation schema/composable imported"
+            echo "Validation schema/composable imported"
           else
-            echo "❌ Validation schema not imported" && exit 1
+            echo "Validation schema not imported" && exit 1
           fi
 
           # Check if hCaptcha integration exists
           if grep -q "initializeCaptcha" app/pages/contact/index.vue || grep -q "useCaptcha" app/pages/contact/index.vue || grep -q "h-captcha-container" app/pages/contact/index.vue; then
-            echo "✅ hCaptcha integration found"
+            echo "hCaptcha integration found"
           else
-            echo "❌ hCaptcha integration missing" && exit 1
+            echo "hCaptcha integration missing" && exit 1
           fi
 
-          echo "✅ Contact form security validation passed!"
+          echo "Contact form security validation passed!"
 
   # Sync to Owner Repository (triggers Vercel deployment)
   sync-to-owner:
     runs-on: ubuntu-latest
-    name: 🚀 Sync to Owner Repository
+    name: Sync to Owner Repository
     needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all history for proper sync
 
-      - name: 🔐 Configure Git
+      - name: Configure Git
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
 
-      - name: 🔑 Setup SSH Key
+      - name: Setup SSH Key
         env:
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         run: |
@@ -226,7 +225,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: 🚀 Push to Owner Repository
+      - name: Push to Owner Repository
         run: |
           # Add owner remote with SSH
           if ! git remote | grep -q "owner"; then
@@ -239,81 +238,5 @@ jobs:
           # Push to owner repository (triggers Vercel deployment)
           git push owner main --force
 
-          echo "✅ Successfully synced to owner repository!"
-          echo "🚀 Vercel deployment should trigger automatically"
-
-  # Create Pull Request from Feature Branch to Main
-  create-pr-to-main:
-    runs-on: ubuntu-latest
-    name: 🔀 Create PR to Main
-    needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
-    if: github.ref != 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 🔀 Create Pull Request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Get branch name
-          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-
-          # Get latest commit info
-          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s")
-          COMMIT_AUTHOR=$(git log -1 --pretty=format:"%an")
-          COMMIT_SHA=$(git log -1 --pretty=format:"%h")
-
-          # Create PR title and body
-          PR_TITLE="${COMMIT_MESSAGE}"
-          PR_BODY="## 🔄 Feature Branch Ready for Review
-
-          **Branch:** \`${BRANCH_NAME}\`
-          **Latest Commit:** ${COMMIT_SHA}
-          **Author:** ${COMMIT_AUTHOR}
-
-          ### ✅ Quality Checks Passed
-          - ✅ TypeScript type checking
-          - ✅ Application build
-          - ✅ Security audit
-          - ✅ Ceramic design system validation
-          - ✅ Contact form security
-
-          This PR is automatically created when changes are pushed to a feature branch.
-
-          **Ready for review and merge!**"
-
-          # Create PR using GitHub CLI
-          gh pr create \
-            --title "$PR_TITLE" \
-            --body "$PR_BODY" \
-            --base main \
-            --head "$BRANCH_NAME" \
-            || echo "PR already exists or unable to create"
-
-      - name: 📊 PR Creation Report
-        run: echo "✅ Pull request created to main branch!"
-
-  # Final Status Check
-  all-checks-passed:
-    runs-on: ubuntu-latest
-    name: ✅ All Quality Checks
-    needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
-    if: always()
-
-    steps:
-      - name: 🎉 Success Report
-        run: |
-          echo "🏺 ====================================="
-          echo "🎉 All Ju Keramia quality checks passed!"
-          echo "✅ Code linting"
-          echo "✅ TypeScript type safety"
-          echo "✅ Application build"
-          echo "✅ Security audit"
-          echo "✅ Ceramic design system"
-          echo "✅ Contact form security"
-          echo "🏺 Ready for ceramic perfection! ✨"
-          echo "====================================="
+          echo "Successfully synced to owner repository!"
+          echo "Vercel deployment should trigger automatically"
