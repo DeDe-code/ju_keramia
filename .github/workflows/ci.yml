@@ -203,12 +203,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Sync to Owner Repository
     needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
-    if: github.ref == 'refs/heads/main'
+    # Only synchronize a validated push to the development main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          # Check out exactly the pushed main commit, so the push below mirrors the tested commit
+          ref: ${{ github.sha }}
           fetch-depth: 0 # Fetch all history for proper sync
 
       - name: Configure Git
@@ -236,7 +239,9 @@ jobs:
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes"
 
           # Push to owner repository (triggers Vercel deployment)
-          git push owner main --force
+          # Fast-forward-only push of the checked-out commit: no local main branch is required,
+          # and a diverged owner main is rejected instead of being overwritten.
+          git push owner HEAD:refs/heads/main
 
           echo "Successfully synced to owner repository!"
           echo "Vercel deployment should trigger automatically"
