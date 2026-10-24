@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
+    "typecheck": "nuxt typecheck",
     "prepare": "husky"
   },
   "dependencies": {
@@ -52,7 +53,8 @@
     "eslint-plugin-vue": "^10.4.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "vue-tsc": "^3.0.7"
   },
   "lint-staged": {
     "*.{js,ts,vue}": [

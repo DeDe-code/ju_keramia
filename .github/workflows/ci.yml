@@ -52,7 +52,7 @@ jobs:
         run: npm ci
 
       - name: TypeScript Check
-        run: npx nuxt typecheck
+        run: npm run typecheck
 
       - name: Report Type Safety
         run: echo "TypeScript type checking passed!"
