@@ -10,8 +10,19 @@ export default defineNuxtConfig({
     '@nuxtjs/google-fonts',
     '@pinia/nuxt',
     'pinia-plugin-persistedstate/nuxt',
+    // @nuxt/image@1.x registers a NuxtPicture SFC whose types target unhead v2, while Nuxt 4.6
+    // ships unhead v3, so type-checking it fails. NuxtPicture is unused in this app; registering
+    // after '@nuxt/image' lets this remove it. Slice E.3 (@nuxt/image v2) should delete this shim.
+    (_options, nuxt) => {
+      nuxt.hook('components:extend', (components) => {
+        const pictureIndex = components.findIndex(
+          (component) => component.pascalName === 'NuxtPicture'
+        );
+        if (pictureIndex !== -1) components.splice(pictureIndex, 1);
+      });
+    },
   ],
-  css: ['./app/assets/css/main.css'],
+  css: ['~/assets/css/main.css'],
 
   // Runtime configuration for API keys
   runtimeConfig: {
@@ -79,6 +90,9 @@ export default defineNuxtConfig({
 
   ui: {
     colorMode: false,
+    // @nuxtjs/google-fonts stays the single font loader; Nuxt UI 4 bundles @nuxt/fonts,
+    // which would load the same families a second time.
+    fonts: false,
   },
 
   // Nuxt Image configuration
