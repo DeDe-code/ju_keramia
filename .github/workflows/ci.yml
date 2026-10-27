@@ -75,13 +75,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # No application credentials are provided here on purpose: runtimeConfig private keys are
+      # resolved by Nuxt at server runtime from NUXT_* variables, so the build must not need them.
       - name: Build Application
         run: npm run build
-        env:
-          # Provide test environment variables for build
-          NUXT_RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || 'test_key' }}
-          NUXT_PUBLIC_HCAPTCHA_SITE_KEY: ${{ secrets.HCAPTCHA_SITE_KEY || 'test_site_key' }}
-          NUXT_HCAPTCHA_SECRET_KEY: ${{ secrets.HCAPTCHA_SECRET_KEY || 'test_secret_key' }}
 
       - name: Build Report
         run: echo "Application built successfully!"
