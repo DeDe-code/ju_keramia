@@ -233,6 +233,12 @@ NUXT_HCAPTCHA_SECRET_KEY=your_hcaptcha_secret_key
 NUXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
+> **Runtime configuration:** Nuxt reads these variables at server runtime through its
+> `NUXT_*` overrides (`resendApiKey` → `NUXT_RESEND_API_KEY`). Private values such as
+> `NUXT_RESEND_API_KEY`, `NUXT_HCAPTCHA_SECRET_KEY`, and the Cloudflare R2 credentials must be
+> available to the running server — not only during `npm run build` — and are never baked into
+> the generated server bundle.
+
 4. **Database Setup**
 
 Run Supabase migrations to create the necessary tables:

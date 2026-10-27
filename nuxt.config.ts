@@ -13,18 +13,22 @@ export default defineNuxtConfig({
   ],
   css: ['~/assets/css/main.css'],
 
-  // Runtime configuration for API keys
+  // Runtime configuration for API keys.
+  // Private values must never be read from process.env here: Nuxt would bake the build
+  // environment's values into the server bundle. Nuxt resolves them at runtime from
+  // NUXT_<KEY_NAME> environment variables (e.g. resendApiKey -> NUXT_RESEND_API_KEY),
+  // so the entries below stay non-sensitive defaults only.
   runtimeConfig: {
     // Private keys (only available on server-side)
-    resendApiKey: process.env.NUXT_RESEND_API_KEY,
-    hcaptchaSecretKey: process.env.NUXT_HCAPTCHA_SECRET_KEY,
-    resendToEmail: process.env.NUXT_RESEND_TO_EMAIL || 'hello@jukeramia.com',
-    resendFromEmail: process.env.NUXT_RESEND_FROM_EMAIL || 'contact@jukeramia.com',
+    resendApiKey: '',
+    hcaptchaSecretKey: '',
+    resendToEmail: 'hello@jukeramia.com',
+    resendFromEmail: 'contact@jukeramia.com',
     //CLOUDFLARE CREDENTIALS:
-    cloudflareAccountId: process.env.NUXT_CLOUDFLARE_ACCOUNT_ID,
-    cloudflareAccessKeyId: process.env.NUXT_CLOUDFLARE_ACCESS_KEY_ID,
-    cloudflareSecretAccessKey: process.env.NUXT_CLOUDFLARE_SECRET_ACCESS_KEY,
-    cloudflareBucketName: process.env.NUXT_CLOUDFLARE_BUCKET_NAME,
+    cloudflareAccountId: '',
+    cloudflareAccessKeyId: '',
+    cloudflareSecretAccessKey: '',
+    cloudflareBucketName: '',
     // Public keys (exposed to client-side)
     public: {
       hcaptchaSiteKey: process.env.NUXT_PUBLIC_HCAPTCHA_SITE_KEY,
