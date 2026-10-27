@@ -194,6 +194,39 @@ Never:
 - bypass authorization or validation to make code/tests pass;
 - treat current legacy administrator metadata logic as approved future architecture unless the active task explicitly says so.
 
+### Secret and credential handling (mandatory)
+
+Secret protection takes precedence over convenience, token efficiency, and automated workflow optimization. If a faster or cheaper approach would require exposing, copying, or printing credential values, choose the slower safe approach or stop and report.
+
+**Sensitive files** must not be read, copied, printed, uploaded, or included in temporary workspaces, logs, reports, generated artifacts, test fixtures, external tools, or AI prompts and responses:
+
+- `.env` and `.env.*`, except explicitly non-sensitive templates such as `.env.example`;
+- private keys;
+- credential files;
+- authentication tokens;
+- password stores;
+- any other file containing private credentials.
+
+Reading actual credential values is a separately approved, security-sensitive operation. Routine coding, investigation, and dependency work must not require access to those values; use documented key names, `.env.example`, or synthetic placeholders instead.
+
+**Temporary workspaces.** Never build a temporary workspace from an unrestricted repository copy, for example `cp -r . /tmp/project` or `rsync -a ./ /tmp/project`, because such a copy can silently carry credentials into an unguarded location. Create temporary workspaces from explicitly selected non-sensitive files only. For dependency-resolution experiments, copy only the required manifests, usually `package.json` and `package-lock.json`.
+
+**Logging and reporting.** Never print or include real credentials in terminal output, error reports, diffs, screenshots, or handoff summaries. When a secret is suspected, report its type and location without revealing its value.
+
+**Build artifacts.** Treat generated server bundles as potentially sensitive, because build-time environment values can be embedded in them. Do not upload or publish a generated artifact before checking whether build-time credentials could have been embedded. Perform that check with synthetic placeholder credentials, never by inspecting or copying real secrets.
+
+A **generated server bundle** is the compiled output produced by the build process, for example the `.output/` directory from a Nuxt/Nitro build.
+
+**Accidental exposure.** If sensitive information is accidentally accessed or copied:
+
+1. stop the operation;
+2. do not reproduce or transmit the credentials;
+3. report the affected location and the operation performed;
+4. state whether external transmission is known, suspected, or unverified;
+5. request user approval before further remediation.
+
+Never claim that deleting a file proves a credential was not exposed.
+
 ---
 
 ## 6. Database and migration safety
