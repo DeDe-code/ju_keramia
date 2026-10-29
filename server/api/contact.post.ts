@@ -24,21 +24,26 @@ export default defineEventHandler(async (event) => {
 
   // Get runtime config for environment variables
   const config = useRuntimeConfig();
+  const { resendApiKey, hcaptchaSecretKey } = config;
+
+  // Credentials are injected at runtime (NUXT_RESEND_API_KEY, NUXT_HCAPTCHA_SECRET_KEY).
+  // When they are missing, fail closed: never send mail or skip captcha verification.
+  if (!resendApiKey || !hcaptchaSecretKey) {
+    console.error('Contact form unavailable: Resend or hCaptcha credentials are not configured');
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Contact form is temporarily unavailable',
+    });
+  }
 
   // Initialize Resend with API key from runtime config
-  const resend = new Resend(config.resendApiKey);
+  const resend = new Resend(resendApiKey);
 
   // hCaptcha verification function
   async function verifyHCaptcha(token: string, remoteIP?: string): Promise<boolean> {
-    const secretKey = config.hcaptchaSecretKey;
-
-    if (!secretKey) {
-      throw new Error('hCaptcha secret key not configured');
-    }
-
     try {
       const formData = new URLSearchParams();
-      formData.append('secret', secretKey);
+      formData.append('secret', hcaptchaSecretKey);
       formData.append('response', token);
       if (remoteIP) {
         formData.append('remoteip', remoteIP);

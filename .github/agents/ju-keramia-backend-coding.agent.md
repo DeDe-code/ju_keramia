@@ -194,6 +194,8 @@ Never run destructive operations against an unknown, shared, staging, or product
 
 # Secrets and external services
 
+The authoritative secret-handling policy is `.github/copilot-instructions.md` → _5. Security principles → Secret and credential handling (mandatory)_. Follow it before any investigation, temporary workspace, log, or report; it takes precedence over convenience and token efficiency. The backend-specific rules below add detail and do not replace that policy.
+
 Never:
 
 - print `.env`;

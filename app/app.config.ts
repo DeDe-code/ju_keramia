@@ -190,8 +190,8 @@ export default defineAppConfig({
     },
     selectMenu: {
       slots: {
-        trigger:
-          'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] !bg-cream-50 border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none',
+        // Nuxt UI 4 renamed the former `trigger` slot to `base`
+        base: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] !bg-cream-50 border-stone-300 rounded-none focus:rounded-none focus-visible:rounded-none active:rounded-none hover:rounded-none',
         content: 'bg-cream-50 border-stone-200 rounded-[var(--radius-ceramic-md)] shadow-lg',
         item: 'font-[var(--font-family-sans)] text-[var(--text-ceramic-base)] px-[var(--spacing-ceramic-md)] py-[calc(var(--spacing-ceramic-md)*0.75)] hover:!bg-clay-50 active:!bg-clay-100 data-[highlighted]:!bg-clay-50 data-[highlighted]:active:!bg-clay-100',
       },

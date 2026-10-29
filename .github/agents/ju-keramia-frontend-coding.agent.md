@@ -146,6 +146,8 @@ Hiding a button does not protect a server action.
 
 Client-side validation improves user experience but does not replace server-side validation.
 
+Secret and credential handling is mandatory and authoritative in `.github/copilot-instructions.md` → _5. Security principles → Secret and credential handling (mandatory)_. Follow it before any investigation, temporary workspace, log, or report; it takes precedence over convenience and token efficiency.
+
 Never:
 
 - expose secrets;

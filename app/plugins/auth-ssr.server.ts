@@ -99,7 +99,6 @@ async function hydrateAuthFromCookies(nuxtApp: NuxtApp): Promise<void> {
   }
 }
 
-// @ts-expect-error - TypeScript has circular reference issues with async plugin initialization
 export default defineNuxtPlugin((nuxtApp: NuxtApp) => {
   // Only run on server-side
   if (import.meta.client) return;
