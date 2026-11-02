@@ -2,7 +2,7 @@ name: CI/CD Pipeline for Ju Keramia
 
 on:
   push:
-    branches: [main, 'feature/**', 'feat/**', 'fix/**', 'hotfix/**']
+    branches: [main, 'feature/**', 'feat/**', 'fix/**', 'hotfix/**', 'test/**']
   pull_request:
     branches: [main]
 
@@ -195,11 +195,73 @@ jobs:
 
           echo "Contact form security validation passed!"
 
+  # Backend Unit Tests (Vitest)
+  test-unit:
+    runs-on: ubuntu-latest
+    name: Backend Unit Tests
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Backend Unit Tests
+        run: npm run test:unit
+
+      - name: Test Report
+        run: echo "Backend unit tests passed!"
+
+  # Database Security Tests (pgTAP against an isolated local Supabase database)
+  test-db:
+    runs-on: ubuntu-latest
+    name: Database Security Tests
+    # Container startup plus migrations on a cold runner: fail fast instead of hanging.
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          # Pinned to the CLI version used to verify these tests locally.
+          version: 2.51.0
+
+      # Only the database container is needed: pgTAP runs through the CLI, and every
+      # migration in supabase/migrations is applied to this throwaway runner database.
+      # No Supabase Cloud project, link, or credential is involved.
+      - name: Start Local Database
+        run: |
+          supabase start -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Run Database Security Tests
+        run: supabase test db --local
+
+      - name: Test Report
+        run: echo "Database security tests passed!"
+
   # Sync to Owner Repository (triggers Vercel deployment)
   sync-to-owner:
     runs-on: ubuntu-latest
     name: Sync to Owner Repository
-    needs: [lint, type-check, build, security-audit, design-system-check, contact-form-test]
+    needs:
+      - lint
+      - type-check
+      - build
+      - security-audit
+      - design-system-check
+      - contact-form-test
+      - test-unit
+      - test-db
     # Only synchronize a validated push to the development main branch
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
