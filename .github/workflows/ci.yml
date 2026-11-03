@@ -101,8 +101,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # Fails on every moderate, high, or critical finding. A narrowly scoped, reviewed
+      # exception for GHSA-g3hv-75wg-m249 (ESLint tooling only) is documented in
+      # SECURITY_AUDIT_EXCEPTIONS.md; the policy is covered by unit tests in test-unit.
       - name: Run Security Audit
-        run: npm audit --audit-level=moderate
+        run: npm run audit:security
 
       - name: Security Report
         run: echo "Security audit completed!"

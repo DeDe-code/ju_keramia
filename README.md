@@ -161,6 +161,18 @@ All database tables are protected with PostgreSQL Row Level Security policies:
 
 **Documentation:** See [docs/PASSWORD_LEAK_CHECK.md](docs/PASSWORD_LEAK_CHECK.md) for password security details.
 
+### Dependency Security Audit
+
+CI fails on any **moderate, high, or critical** dependency vulnerability:
+
+```bash
+npm run audit:security
+```
+
+A single reviewed exception for the ESLint tooling chain (advisory `GHSA-g3hv-75wg-m249`) is
+documented in [SECURITY_AUDIT_EXCEPTIONS.md](SECURITY_AUDIT_EXCEPTIONS.md). Everything else, including
+any additional advisory on the same package, still fails the gate.
+
 ### Applying RLS Migrations
 
 **Important:** Before running migrations, update the admin email in the SQL files:
